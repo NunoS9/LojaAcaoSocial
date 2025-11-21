@@ -7,7 +7,7 @@ Projeto Aplicado e Programação de Dispositivos Móveis
 ## Grupo  *17*
 | Número | Nome |
 | -----   | ---- |
-| 25470   | Pedro Martins |
+| 25417   | Nuno Silva |
 | 26747   | Gonçalo Figueiredo |
 | 25431     | Hugo Azevedo  |
 | 25434     | Tiago Castro  |
