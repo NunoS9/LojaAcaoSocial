@@ -4,7 +4,7 @@ Projeto Aplicado e Programação de Dispositivos Móveis
 
 ---
 
-## Grupo  *17*
+## Grupo  *12*
 | Número | Nome |
 | -----   | ---- |
 | 25417   | Nuno Silva |
