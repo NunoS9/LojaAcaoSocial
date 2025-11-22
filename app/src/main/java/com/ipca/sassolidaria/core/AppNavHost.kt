@@ -1,6 +1,11 @@
 package com.ipca.sassolidaria.core
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -23,7 +28,9 @@ fun AppNavHost() {
         composable(Routes.SPLASH) {
             SplashView(
                 onNavigateToLogin = {
-                    navController.navigate(Routes.LOGIN)
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
                 }
             )
         }
@@ -38,7 +45,7 @@ fun AppNavHost() {
         // REGISTER
         composable(Routes.REGISTER) {
             RegisterView(
-                onBack = { navController.popBackStack() }
+                navController = navController
             )
         }
 
@@ -48,5 +55,16 @@ fun AppNavHost() {
                 onBack = { navController.popBackStack() }
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AppNavHostPreview() {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        AppNavHost()
     }
 }

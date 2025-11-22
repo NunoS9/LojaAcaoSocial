@@ -3,7 +3,6 @@ package com.ipca.sassolidaria.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,11 +19,10 @@ import com.ipca.sassolidaria.core.Routes
 
 @Composable
 fun LoginView(
-    navController: NavController?,
+    navController: NavController? = null,
     viewModel: LoginViewModel = LoginViewModel()
 ) {
-
-    val state = viewModel.uiState.value
+    val state by viewModel.uiState
     val greenPrimary = Color(0xFF004B3C)
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -47,20 +44,24 @@ fun LoginView(
 
             Spacer(Modifier.height(30.dp))
 
-            // EMAIL INPUT
+            // EMAIL
             OutlinedTextField(
                 value = state.email,
-                onValueChange = { viewModel.uiState.value = state.copy(email = it) },
+                onValueChange = {
+                    viewModel.uiState.value = state.copy(email = it)
+                },
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.height(16.dp))
 
-            // PASSWORD INPUT
+            // PASSWORD
             OutlinedTextField(
                 value = state.password,
-                onValueChange = { viewModel.uiState.value = state.copy(password = it) },
+                onValueChange = {
+                    viewModel.uiState.value = state.copy(password = it)
+                },
                 label = { Text("Palavra-passe") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -69,7 +70,9 @@ fun LoginView(
 
             // BOTÃO LOGIN
             Button(
-                onClick = { viewModel.login { /* EXEMPLO: Vamos navegar depois */ } },
+                onClick = {
+                    viewModel.login { tipo -> }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = greenPrimary),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -80,21 +83,13 @@ fun LoginView(
 
             Spacer(Modifier.height(20.dp))
 
-            // MENSAGENS DE ERRO / SUCESSO
+            // ERROS / SUCESSO
             if (state.errorMessage.isNotEmpty()) {
-                Text(
-                    text = state.errorMessage,
-                    color = Color.Red,
-                    fontSize = 15.sp
-                )
+                Text(state.errorMessage, color = Color.Red, fontSize = 15.sp)
             }
 
             if (state.successMessage.isNotEmpty()) {
-                Text(
-                    text = state.successMessage,
-                    color = Color.Green,
-                    fontSize = 15.sp
-                )
+                Text(state.successMessage, color = Color.Green, fontSize = 15.sp)
             }
 
             Spacer(Modifier.height(20.dp))
@@ -118,4 +113,10 @@ fun LoginView(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginPreview() {
+    LoginView()
 }

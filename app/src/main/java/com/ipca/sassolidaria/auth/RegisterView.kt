@@ -12,16 +12,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ipca.sassolidaria.R
 import com.ipca.sassolidaria.core.Routes
 
 @Composable
-fun RegisterView(onBack: () -> Unit) {
-
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun RegisterView(
+    navController: NavController? = null,
+    viewModel: RegisterViewModel = viewModel()
+) {
+    val state by viewModel.uiState
 
     Column(
         modifier = Modifier
@@ -40,17 +41,15 @@ fun RegisterView(onBack: () -> Unit) {
 
         Spacer(Modifier.height(25.dp))
 
-        Text(
-            text = "Criar Conta",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text("Criar Conta", fontSize = 28.sp, fontWeight = FontWeight.Bold)
 
         Spacer(Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = state.name,
+            onValueChange = {
+                viewModel.uiState.value = state.copy(name = it)
+            },
             label = { Text("Nome Completo") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -58,8 +57,10 @@ fun RegisterView(onBack: () -> Unit) {
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = state.email,
+            onValueChange = {
+                viewModel.uiState.value = state.copy(email = it)
+            },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -67,8 +68,10 @@ fun RegisterView(onBack: () -> Unit) {
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = state.password,
+            onValueChange = {
+                viewModel.uiState.value = state.copy(password = it)
+            },
             label = { Text("Palavra-passe") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -76,20 +79,32 @@ fun RegisterView(onBack: () -> Unit) {
         Spacer(Modifier.height(26.dp))
 
         Button(
-            onClick = { },
+            onClick = {
+                viewModel.register {
+                    navController?.navigate(Routes.LOGIN)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF004B3C)
-            )
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004B3C))
         ) {
             Text("Registar", color = Color.White, fontSize = 18.sp)
         }
 
+        if (state.errorMessage.isNotEmpty()) {
+            Text(state.errorMessage, color = Color.Red)
+        }
+
+        if (state.successMessage.isNotEmpty()) {
+            Text(state.successMessage, color = Color.Green)
+        }
+
         Spacer(Modifier.height(16.dp))
 
-        TextButton(onClick = onBack) {
+        TextButton(
+            onClick = { navController?.navigate(Routes.LOGIN) }
+        ) {
             Text("Já tem conta? Iniciar sessão", color = Color(0xFF004B3C))
         }
     }
@@ -98,5 +113,5 @@ fun RegisterView(onBack: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun RegisterPreview() {
-    RegisterView(onBack = {})
+    RegisterView()
 }

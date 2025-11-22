@@ -1,6 +1,7 @@
 package com.ipca.sassolidaria.auth
 
-data class LoginUiState(
+data class RegisterUiState(
+    val name: String = "",
     val email: String = "",
     val password: String = "",
     val errorMessage: String = "",
