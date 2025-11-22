@@ -3,10 +3,10 @@ package com.ipca.sassolidaria.data.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-class AuthRepository {
-
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+class AuthRepository(
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+) {
 
     fun registerUser(
         name: String,
@@ -22,10 +22,10 @@ class AuthRepository {
                 val userData = hashMapOf(
                     "nome" to name,
                     "email" to email,
-                    "tipo" to "UTILIZADOR",
+                    "tipo" to "UTILIZADOR", // mais tarde podem gravar "BENEFICIARIO" ou "COLABORADOR"
                 )
 
-                db.collection("users")
+                db.collection("users") // se quiseres, depois trocamos para FirestoreCollections.UTILIZADORES
                     .document(uid)
                     .set(userData)
                     .addOnSuccessListener {

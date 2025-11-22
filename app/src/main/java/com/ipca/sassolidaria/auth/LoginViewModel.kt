@@ -1,9 +1,12 @@
 package com.ipca.sassolidaria.auth
 
-import androidx.lifecycle.ViewModel
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.ipca.sassolidaria.core.UserType
 
 data class LoginUiState(
     val email: String = "",
@@ -14,17 +17,30 @@ data class LoginUiState(
 
 class LoginViewModel : ViewModel() {
 
-    val uiState = mutableStateOf(LoginUiState())
+    var uiState by mutableStateOf(LoginUiState())
+        private set
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    fun login(onSuccess: (String) -> Unit) {
-        val email = uiState.value.email
-        val password = uiState.value.password
+    fun onEmailChange(newEmail: String) {
+        uiState = uiState.copy(email = newEmail)
+    }
+
+    fun onPasswordChange(newPass: String) {
+        uiState = uiState.copy(password = newPass)
+    }
+
+    /**
+     * Faz login e, em caso de sucesso, devolve o tipo de utilizador:
+     * UTILIZADOR / BENEFICIARIO / COLABORADOR
+     */
+    fun login(onSuccess: (UserType) -> Unit) {
+        val email = uiState.email.trim()
+        val password = uiState.password.trim()
 
         if (email.isBlank() || password.isBlank()) {
-            uiState.value = uiState.value.copy(
+            uiState = uiState.copy(
                 errorMessage = "Preencha todos os campos",
                 successMessage = ""
             )
@@ -35,12 +51,19 @@ class LoginViewModel : ViewModel() {
             .addOnSuccessListener { result ->
                 val uid = result.user?.uid ?: ""
 
-                db.collection("users").document(uid)
+                db.collection("users")
+                    .document(uid)
                     .get()
                     .addOnSuccessListener { doc ->
-                        val tipo = doc.getString("tipo") ?: "UTILIZADOR"
+                        val tipoStr = doc.getString("tipo") ?: "UTILIZADOR"
 
-                        uiState.value = uiState.value.copy(
+                        val tipo = try {
+                            UserType.valueOf(tipoStr)
+                        } catch (e: Exception) {
+                            UserType.UTILIZADOR
+                        }
+
+                        uiState = uiState.copy(
                             successMessage = "Login efetuado com sucesso!",
                             errorMessage = ""
                         )
@@ -48,15 +71,15 @@ class LoginViewModel : ViewModel() {
                         onSuccess(tipo)
                     }
                     .addOnFailureListener {
-                        uiState.value = uiState.value.copy(
+                        uiState = uiState.copy(
                             errorMessage = "Erro ao obter dados do utilizador",
                             successMessage = ""
                         )
                     }
             }
             .addOnFailureListener {
-                uiState.value = uiState.value.copy(
-                    errorMessage = "Email ou password incorretos",
+                uiState = uiState.copy(
+                    errorMessage = "Email ou palavra-passe incorretos.",
                     successMessage = ""
                 )
             }

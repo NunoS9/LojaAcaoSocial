@@ -22,7 +22,7 @@ fun RegisterView(
     navController: NavController? = null,
     viewModel: RegisterViewModel = viewModel()
 ) {
-    val state by viewModel.uiState
+    val state = viewModel.uiState
 
     Column(
         modifier = Modifier
@@ -41,15 +41,17 @@ fun RegisterView(
 
         Spacer(Modifier.height(25.dp))
 
-        Text("Criar Conta", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text(
+            text = "Criar Conta",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
 
         Spacer(Modifier.height(32.dp))
 
         OutlinedTextField(
             value = state.name,
-            onValueChange = {
-                viewModel.uiState.value = state.copy(name = it)
-            },
+            onValueChange = { viewModel.onNameChange(it) },
             label = { Text("Nome Completo") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -58,9 +60,7 @@ fun RegisterView(
 
         OutlinedTextField(
             value = state.email,
-            onValueChange = {
-                viewModel.uiState.value = state.copy(email = it)
-            },
+            onValueChange = { viewModel.onEmailChange(it) },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -69,9 +69,7 @@ fun RegisterView(
 
         OutlinedTextField(
             value = state.password,
-            onValueChange = {
-                viewModel.uiState.value = state.copy(password = it)
-            },
+            onValueChange = { viewModel.onPasswordChange(it) },
             label = { Text("Palavra-passe") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -87,10 +85,14 @@ fun RegisterView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004B3C))
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF004B3C)
+            )
         ) {
             Text("Registar", color = Color.White, fontSize = 18.sp)
         }
+
+        Spacer(Modifier.height(12.dp))
 
         if (state.errorMessage.isNotEmpty()) {
             Text(state.errorMessage, color = Color.Red)

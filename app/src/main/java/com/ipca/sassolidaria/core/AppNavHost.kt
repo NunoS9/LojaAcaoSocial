@@ -13,6 +13,9 @@ import com.ipca.sassolidaria.auth.LoginView
 import com.ipca.sassolidaria.auth.RegisterView
 import com.ipca.sassolidaria.auth.RecoverPasswordView
 import com.ipca.sassolidaria.ui.screens.SplashView
+import com.ipca.sassolidaria.ui.beneficiario.HomeBeneficiarioView
+import com.ipca.sassolidaria.ui.colaborador.HomeColaboradorView
+import com.ipca.sassolidaria.ui.utilizador.HomeUtilizadorView
 
 @Composable
 fun AppNavHost() {
@@ -54,6 +57,19 @@ fun AppNavHost() {
             RecoverPasswordView(
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        // -------- NOVAS ROTAS DE HOME --------
+        composable(Routes.HOME_COLABORADOR) {
+            HomeColaboradorView(navController = navController)
+        }
+
+        composable(Routes.HOME_BENEFICIARIO) {
+            HomeBeneficiarioView(navController = navController)
+        }
+
+        composable(Routes.HOME_UTILIZADOR) {
+            HomeUtilizadorView(navController = navController)
         }
     }
 }

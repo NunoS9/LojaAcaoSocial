@@ -9,20 +9,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ipca.sassolidaria.R
 import com.ipca.sassolidaria.core.Routes
+import com.ipca.sassolidaria.core.UserType
 
 @Composable
 fun LoginView(
     navController: NavController? = null,
-    viewModel: LoginViewModel = LoginViewModel()
+    viewModel: LoginViewModel = viewModel()
 ) {
-    val state by viewModel.uiState
+    val state = viewModel.uiState
     val greenPrimary = Color(0xFF004B3C)
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -47,9 +49,7 @@ fun LoginView(
             // EMAIL
             OutlinedTextField(
                 value = state.email,
-                onValueChange = {
-                    viewModel.uiState.value = state.copy(email = it)
-                },
+                onValueChange = { viewModel.onEmailChange(it) },
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -59,9 +59,7 @@ fun LoginView(
             // PASSWORD
             OutlinedTextField(
                 value = state.password,
-                onValueChange = {
-                    viewModel.uiState.value = state.copy(password = it)
-                },
+                onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("Palavra-passe") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -71,7 +69,27 @@ fun LoginView(
             // BOTÃO LOGIN
             Button(
                 onClick = {
-                    viewModel.login { tipo -> }
+                    viewModel.login { tipo ->
+                        if (navController == null) return@login
+
+                        when (tipo) {
+                            UserType.COLABORADOR -> {
+                                navController.navigate(Routes.HOME_COLABORADOR) {
+                                    popUpTo(Routes.LOGIN) { inclusive = true }
+                                }
+                            }
+                            UserType.BENEFICIARIO -> {
+                                navController.navigate(Routes.HOME_BENEFICIARIO) {
+                                    popUpTo(Routes.LOGIN) { inclusive = true }
+                                }
+                            }
+                            UserType.UTILIZADOR -> {
+                                navController.navigate(Routes.HOME_UTILIZADOR) {
+                                    popUpTo(Routes.LOGIN) { inclusive = true }
+                                }
+                            }
+                        }
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = greenPrimary),
                 modifier = Modifier
@@ -85,11 +103,23 @@ fun LoginView(
 
             // ERROS / SUCESSO
             if (state.errorMessage.isNotEmpty()) {
-                Text(state.errorMessage, color = Color.Red, fontSize = 15.sp)
+                Text(
+                    text = state.errorMessage,
+                    color = Color.Red,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             if (state.successMessage.isNotEmpty()) {
-                Text(state.successMessage, color = Color.Green, fontSize = 15.sp)
+                Text(
+                    text = state.successMessage,
+                    color = Color.Green,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(Modifier.height(20.dp))
