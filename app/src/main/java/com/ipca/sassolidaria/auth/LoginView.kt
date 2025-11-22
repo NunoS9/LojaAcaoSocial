@@ -1,4 +1,5 @@
 package com.ipca.sassolidaria.auth
+import androidx.compose.ui.tooling.preview.Preview
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -9,11 +10,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ipca.sassolidaria.R
 import com.ipca.sassolidaria.core.Routes
@@ -22,7 +21,7 @@ import com.ipca.sassolidaria.core.UserType
 @Composable
 fun LoginView(
     navController: NavController? = null,
-    viewModel: LoginViewModel = viewModel()
+    viewModel: LoginViewModel = remember { LoginViewModel() }
 ) {
     val state = viewModel.uiState
     val greenPrimary = Color(0xFF004B3C)
@@ -56,12 +55,13 @@ fun LoginView(
 
             Spacer(Modifier.height(16.dp))
 
-            // PASSWORD
+            // PASSWORD (com bolinhas)
             OutlinedTextField(
                 value = state.password,
                 onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("Palavra-passe") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = PasswordVisualTransformation()
             )
 
             Spacer(Modifier.height(20.dp))
@@ -70,24 +70,15 @@ fun LoginView(
             Button(
                 onClick = {
                     viewModel.login { tipo ->
-                        if (navController == null) return@login
-
                         when (tipo) {
-                            UserType.COLABORADOR -> {
-                                navController.navigate(Routes.HOME_COLABORADOR) {
-                                    popUpTo(Routes.LOGIN) { inclusive = true }
-                                }
-                            }
-                            UserType.BENEFICIARIO -> {
-                                navController.navigate(Routes.HOME_BENEFICIARIO) {
-                                    popUpTo(Routes.LOGIN) { inclusive = true }
-                                }
-                            }
-                            UserType.UTILIZADOR -> {
-                                navController.navigate(Routes.HOME_UTILIZADOR) {
-                                    popUpTo(Routes.LOGIN) { inclusive = true }
-                                }
-                            }
+                            UserType.COLABORADOR ->
+                                navController?.navigate(Routes.HOME_COLABORADOR)
+
+                            UserType.BENEFICIARIO ->
+                                navController?.navigate(Routes.HOME_BENEFICIARIO)
+
+                            UserType.UTILIZADOR ->
+                                navController?.navigate(Routes.HOME_UTILIZADOR)
                         }
                     }
                 },
@@ -101,25 +92,14 @@ fun LoginView(
 
             Spacer(Modifier.height(20.dp))
 
-            // ERROS / SUCESSO
+            // ERROS
             if (state.errorMessage.isNotEmpty()) {
-                Text(
-                    text = state.errorMessage,
-                    color = Color.Red,
-                    fontSize = 15.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Text(state.errorMessage, color = Color.Red, fontSize = 15.sp)
             }
 
+            // SUCESSO
             if (state.successMessage.isNotEmpty()) {
-                Text(
-                    text = state.successMessage,
-                    color = Color.Green,
-                    fontSize = 15.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Text(state.successMessage, color = Color.Green, fontSize = 15.sp)
             }
 
             Spacer(Modifier.height(20.dp))
@@ -145,8 +125,11 @@ fun LoginView(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
+@Preview(showBackground = true)
 fun LoginPreview() {
-    LoginView()
+    LoginView(
+        navController = null,
+        viewModel = remember { LoginViewModel() }
+    )
 }
