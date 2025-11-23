@@ -32,36 +32,28 @@ class LoginViewModel : ViewModel() {
     }
 
     /**
-     * Faz login e, em caso de sucesso, devolve o tipo de utilizador:
-     * UTILIZADOR / BENEFICIARIO / COLABORADOR
+     * Faz login e devolve o tipo de utilizador
      */
     fun login(onSuccess: (UserType) -> Unit) {
+
         val email = uiState.email.trim()
         val password = uiState.password.trim()
 
         if (email.isBlank() || password.isBlank()) {
-            uiState = uiState.copy(
-                errorMessage = "Preencha todos os campos",
-                successMessage = ""
-            )
+            uiState = uiState.copy(errorMessage = "Preencha todos os campos")
             return
         }
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
-                val uid = result.user?.uid ?: ""
 
-                db.collection("users")
-                    .document(uid)
-                    .get()
+                val uid = result.user?.uid ?: return@addOnSuccessListener
+
+                db.collection("users").document(uid).get()
                     .addOnSuccessListener { doc ->
-                        val tipoStr = doc.getString("tipo") ?: "UTILIZADOR"
 
-                        val tipo = try {
-                            UserType.valueOf(tipoStr)
-                        } catch (e: Exception) {
-                            UserType.UTILIZADOR
-                        }
+                        val tipoStr = doc.getString("tipo") ?: "UTILIZADOR"
+                        val tipo = UserType.valueOf(tipoStr)
 
                         uiState = uiState.copy(
                             successMessage = "Login efetuado com sucesso!",
@@ -71,17 +63,11 @@ class LoginViewModel : ViewModel() {
                         onSuccess(tipo)
                     }
                     .addOnFailureListener {
-                        uiState = uiState.copy(
-                            errorMessage = "Erro ao obter dados do utilizador",
-                            successMessage = ""
-                        )
+                        uiState = uiState.copy(errorMessage = "Erro ao obter dados do utilizador.")
                     }
             }
             .addOnFailureListener {
-                uiState = uiState.copy(
-                    errorMessage = "Email ou palavra-passe incorretos.",
-                    successMessage = ""
-                )
+                uiState = uiState.copy(errorMessage = "Email ou palavra-passe incorretos.")
             }
     }
 }

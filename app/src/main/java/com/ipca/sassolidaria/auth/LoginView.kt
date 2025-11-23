@@ -1,5 +1,4 @@
 package com.ipca.sassolidaria.auth
-import androidx.compose.ui.tooling.preview.Preview
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -11,12 +10,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.ipca.sassolidaria.R
 import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.core.UserType
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 
 @Composable
 fun LoginView(
@@ -55,13 +60,26 @@ fun LoginView(
 
             Spacer(Modifier.height(16.dp))
 
-            // PASSWORD (com bolinhas)
+            // PASSWORD with SHOW/HIDE
+            var passwordVisible by remember { mutableStateOf(false) }
+
             OutlinedTextField(
                 value = state.password,
                 onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("Palavra-passe") },
                 modifier = Modifier.fillMaxWidth(),
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = if (passwordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                trailingIcon = {
+                    val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    val desc = if (passwordVisible) "Ocultar palavra-passe" else "Mostrar palavra-passe"
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = icon, contentDescription = desc)
+                    }
+                }
             )
 
             Spacer(Modifier.height(20.dp))
@@ -70,22 +88,31 @@ fun LoginView(
             Button(
                 onClick = {
                     viewModel.login { tipo ->
-                        when (tipo) {
-                            UserType.COLABORADOR ->
-                                navController?.navigate(Routes.HOME_COLABORADOR)
 
-                            UserType.BENEFICIARIO ->
-                                navController?.navigate(Routes.HOME_BENEFICIARIO)
-
-                            UserType.UTILIZADOR ->
-                                navController?.navigate(Routes.HOME_UTILIZADOR)
+                        val route = when (tipo) {
+                            UserType.COLABORADOR -> Routes.HOME_COLABORADOR
+                            UserType.BENEFICIARIO -> Routes.HOME_BENEFICIARIO
+                            UserType.UTILIZADOR -> Routes.HOME_UTILIZADOR
                         }
+
+                        // navegar
+                        navController?.navigate(route) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
+
+                        // guardar tipo (para a BottomBar)
+                        navController?.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("userType", tipo.name)
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = greenPrimary),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(55.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = greenPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 Text("Entrar", color = Color.White)
             }
@@ -125,11 +152,9 @@ fun LoginView(
     }
 }
 
-@Composable
 @Preview(showBackground = true)
-fun LoginPreview() {
-    LoginView(
-        navController = null,
-        viewModel = remember { LoginViewModel() }
-    )
+@Composable
+fun LoginViewPreview() {
+    val nav = rememberNavController()
+    LoginView(navController = nav)
 }
