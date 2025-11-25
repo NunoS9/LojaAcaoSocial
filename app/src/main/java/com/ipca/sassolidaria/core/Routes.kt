@@ -7,6 +7,8 @@ object Routes {
     const val REGISTER = "register"
     const val RECOVER_PASSWORD = "recover_password"
 
+    const val NOTIFICACOES_UTILIZADOR = "notificacoes_utilizador"
+
     const val HOME_COLABORADOR = "home_colaborador"
     const val HOME_BENEFICIARIO = "home_beneficiario"
     const val HOME_UTILIZADOR = "home_utilizador"
