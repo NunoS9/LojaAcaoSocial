@@ -68,7 +68,7 @@ fun BottomBar(navController: NavController) {
         UserType.UTILIZADOR -> listOf(
             BottomNavItem("Início", Routes.HOME_UTILIZADOR, Icons.Filled.Home, Icons.Outlined.Home),
             BottomNavItem("Perfil", Routes.PERFIL_BENEFICIARIO, Icons.Filled.Person, Icons.Outlined.Person),
-            BottomNavItem("Candidaturas", Routes.CANDIDATURAS_LIST, Icons.Filled.List, Icons.Outlined.List),
+            BottomNavItem("Candidaturas", Routes.CANDIDATURA_UTILIZADOR, Icons.Filled.List, Icons.Outlined.List),
         )
     }
 

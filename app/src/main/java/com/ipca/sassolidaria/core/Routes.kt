@@ -24,4 +24,9 @@ object Routes {
     const val ENTREGAS_LIST = "entregas_list"
     const val MARCACOES_LIST = "marcacoes_list"
     const val PERFIL_BENEFICIARIO = "perfil_beneficiario"
+
+    //Utilizador
+
+    const val CANDIDATURA_UTILIZADOR = "candidatura_utilizador"
+    const val CANDIDATURA_CREATE = "candidatura_create"
 }
