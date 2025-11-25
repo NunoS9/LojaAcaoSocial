@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.core.UserType
+import com.ipca.sassolidaria.data.model.Utilizador
+import com.ipca.sassolidaria.utils.FirestoreCollections
 
 data class LoginUiState(
     val email: String = "",
@@ -35,25 +37,29 @@ class LoginViewModel : ViewModel() {
      * Faz login e devolve o tipo de utilizador
      */
     fun login(onSuccess: (UserType) -> Unit) {
-
         val email = uiState.email.trim()
         val password = uiState.password.trim()
 
         if (email.isBlank() || password.isBlank()) {
-            uiState = uiState.copy(errorMessage = "Preencha todos os campos")
+            uiState = uiState.copy(
+                errorMessage = "Preencha todos os campos",
+                successMessage = ""
+            )
             return
         }
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
+                val uid = result.user?.uid ?: ""
 
-                val uid = result.user?.uid ?: return@addOnSuccessListener
-
-                db.collection("users").document(uid).get()
+                db.collection(FirestoreCollections.UTILIZADORES)
+                    .document(uid)
+                    .get()
                     .addOnSuccessListener { doc ->
 
-                        val tipoStr = doc.getString("tipo") ?: "UTILIZADOR"
-                        val tipo = UserType.valueOf(tipoStr)
+                        val utilizador = doc.toObject(Utilizador::class.java)
+
+                        val tipo = utilizador?.tipo ?: UserType.UTILIZADOR
 
                         uiState = uiState.copy(
                             successMessage = "Login efetuado com sucesso!",
@@ -63,11 +69,17 @@ class LoginViewModel : ViewModel() {
                         onSuccess(tipo)
                     }
                     .addOnFailureListener {
-                        uiState = uiState.copy(errorMessage = "Erro ao obter dados do utilizador.")
+                        uiState = uiState.copy(
+                            errorMessage = "Erro ao obter dados do utilizador",
+                            successMessage = ""
+                        )
                     }
             }
             .addOnFailureListener {
-                uiState = uiState.copy(errorMessage = "Email ou palavra-passe incorretos.")
+                uiState = uiState.copy(
+                    errorMessage = "Email ou palavra-passe incorretos.",
+                    successMessage = ""
+                )
             }
     }
 }

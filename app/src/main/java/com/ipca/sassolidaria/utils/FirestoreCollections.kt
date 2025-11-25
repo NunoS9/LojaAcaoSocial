@@ -2,7 +2,7 @@ package com.ipca.sassolidaria.utils
 
 object FirestoreCollections {
 
-    const val UTILIZADORES = "utilizadores"
+    const val UTILIZADORES = "users"
     const val BENEFICIARIOS = "beneficiarios"
     const val COLABORADORES = "colaboradores"
 
