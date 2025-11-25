@@ -16,6 +16,9 @@ import com.ipca.sassolidaria.ui.screens.SplashView
 import com.ipca.sassolidaria.ui.beneficiario.HomeBeneficiarioView
 import com.ipca.sassolidaria.ui.colaborador.HomeColaboradorView
 import com.ipca.sassolidaria.ui.utilizador.HomeUtilizadorView
+import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
+import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
+
 
 @Composable
 fun AppNavHost() {
@@ -70,6 +73,13 @@ fun AppNavHost() {
 
         composable(Routes.HOME_UTILIZADOR) {
             HomeUtilizadorView(navController = navController)
+        }
+
+        composable(Routes.CANDIDATURA_UTILIZADOR) {
+            CandidaturasUtilizadorView(navController = navController)
+        }
+        composable(Routes.CANDIDATURA_CREATE) {
+            CandidaturaCreateView(navController = navController)
         }
     }
 }

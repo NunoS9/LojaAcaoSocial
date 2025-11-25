@@ -40,3 +40,4 @@ fun HomeUtilizadorPreview() {
 
     HomeUtilizadorView(navController = nav)
 }
+
