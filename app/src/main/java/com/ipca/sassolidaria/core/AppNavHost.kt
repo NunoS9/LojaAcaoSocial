@@ -1,5 +1,7 @@
 package com.ipca.sassolidaria.core
 
+import com.ipca.sassolidaria.ui.components.BottomBar
+import com.ipca.sassolidaria.ui.colaborador.perfil.PerfilColaboradorView
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -9,6 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ipca.sassolidaria.auth.LoginView
 import com.ipca.sassolidaria.auth.RegisterView
 import com.ipca.sassolidaria.auth.RecoverPasswordView
@@ -43,35 +46,62 @@ fun AppNavHost() {
 
         // LOGIN
         composable(Routes.LOGIN) {
-            LoginView(
-                navController = navController
-            )
+            LoginView(navController = navController)
         }
 
         // REGISTER
         composable(Routes.REGISTER) {
-            RegisterView(
-                navController = navController
-            )
+            RegisterView(navController = navController)
         }
 
         // RECOVER PASSWORD
         composable(Routes.RECOVER_PASSWORD) {
-            RecoverPasswordView(
-                onBack = { navController.popBackStack() }
-            )
+            RecoverPasswordView(onBack = { navController.popBackStack() })
         }
 
-        // -------- NOVAS ROTAS DE HOME --------
+        // -------- HOME COLABORADOR --------
         composable(Routes.HOME_COLABORADOR) {
+
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("userType", "COLABORADOR")
+
             HomeColaboradorView(navController = navController)
         }
 
+        // PERFIL COLABORADOR
+        composable(Routes.PERFIL_COLABORADOR) {
+
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("userType", "COLABORADOR")
+
+            PerfilColaboradorView(
+                viewModel = viewModel(),
+                onLogoutConfirmed = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(0)
+                    }
+                },
+                bottomBar = { BottomBar(navController = navController) }
+            )
+        }
+
+        // -------- HOME BENEFICIARIO --------
         composable(Routes.HOME_BENEFICIARIO) {
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("userType", "BENEFICIARIO")
+
             HomeBeneficiarioView(navController = navController)
         }
 
+        // -------- HOME UTILIZADOR --------
         composable(Routes.HOME_UTILIZADOR) {
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("userType", "UTILIZADOR")
+
             HomeUtilizadorView(navController = navController)
         }
         composable(Routes.PERFIL_UTILIZADOR) {
@@ -89,7 +119,6 @@ fun AppNavHost() {
         composable(Routes.NOTIFICACOES_UTILIZADOR) {
             NotificacoesUtilizadorView(navController = navController)
         }
-
     }
 }
 

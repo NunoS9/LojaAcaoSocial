@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,13 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.core.UserType
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 
 private val ActiveGreen = Color(0xFF004B3C)
 private val InactiveGray = Color(0xFF9E9E9E)
@@ -92,6 +89,12 @@ fun BottomBar(navController: NavController) {
                 modifier = Modifier
                     .width(70.dp)
                     .clickable {
+
+
+                        navController.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("userType", userType.name)
+
                         navController.navigate(item.route) {
                             launchSingleTop = true
                             restoreState = true
