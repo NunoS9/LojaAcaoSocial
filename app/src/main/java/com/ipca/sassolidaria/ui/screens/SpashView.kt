@@ -25,7 +25,7 @@ fun SplashView(onNavigateToLogin: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.icon_sassolidaria),
+            painter = painterResource(id = R.drawable.sas),
             contentDescription = "App Icon",
             modifier = Modifier.size(450.dp)
         )

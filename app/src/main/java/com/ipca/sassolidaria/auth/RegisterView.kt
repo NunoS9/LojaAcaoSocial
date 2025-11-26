@@ -1,12 +1,12 @@
 package com.ipca.sassolidaria.auth
-
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +24,7 @@ fun RegisterView(
 ) {
     val state = viewModel.uiState
 
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -34,20 +35,25 @@ fun RegisterView(
         Spacer(Modifier.height(60.dp))
 
         Image(
-            painter = painterResource(id = R.drawable.icon_sassolidaria),
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
-            modifier = Modifier.size(250.dp)
+            modifier = Modifier.size(200.dp)
         )
-
         Spacer(Modifier.height(25.dp))
 
         Text(
-            text = "Criar Conta",
+            text = "Registo",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold
         )
+        Spacer(Modifier.height(16.dp))
 
-        Spacer(Modifier.height(32.dp))
+        Text(
+            text = "Crie aqui a sua conta para aceder ao sistema.",
+            fontSize = 15.sp,
+            color = Color.Black,
+        )
+        Spacer(Modifier.height(30.dp))
 
         OutlinedTextField(
             value = state.name,
@@ -55,7 +61,6 @@ fun RegisterView(
             label = { Text("Nome Completo") },
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -64,7 +69,6 @@ fun RegisterView(
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -73,7 +77,6 @@ fun RegisterView(
             label = { Text("Palavra-passe") },
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(Modifier.height(26.dp))
 
         Button(

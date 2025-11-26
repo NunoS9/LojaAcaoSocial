@@ -33,9 +33,9 @@ fun RecoverPasswordView(
         Spacer(Modifier.height(60.dp))
 
         Image(
-            painter = painterResource(id = R.drawable.icon_sassolidaria),
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
-            modifier = Modifier.size(250.dp)
+            modifier = Modifier.size(200.dp)
         )
 
         Spacer(Modifier.height(25.dp))
