@@ -1,24 +1,45 @@
 package com.ipca.sassolidaria.ui.utilizador.candidaturas
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.ipca.sassolidaria.data.model.enums.GrauCurso
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
+import androidx.compose.ui.unit.sp
+
+
+private val GreenDark = Color(0xFF004B3C)
 
 @Composable
 fun CandidaturaCreateView(
@@ -27,7 +48,20 @@ fun CandidaturaCreateView(
 ) {
     val submitState = viewModel.submitState
 
-    // Quando submete com sucesso → volta à lista de candidaturas
+    // Data de nascimento (por agora só string local)
+    var dataNascimento by remember { mutableStateOf("") }
+
+    // Documento selecionado
+    var selectedFileName by remember { mutableStateOf<String?>(null) }
+
+    // Picker de ficheiros
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        selectedFileName = uri?.lastPathSegment
+    }
+
+    // Quando submeter com sucesso -> volta atrás (Minhas Candidaturas)
     LaunchedEffect(submitState) {
         if (submitState is ResultState.Success) {
             navController.popBackStack()
@@ -46,61 +80,33 @@ fun CandidaturaCreateView(
                 .padding(innerPadding)
                 .padding(16.dp)
                 .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Título
+            // ----------------- HEADER -----------------
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Voltar"
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Submeter Candidatura",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // ----------------- TÍTULO / ANO LETIVO -----------------
             Text(
-                text = "Nova candidatura",
+                text = "Detalhes da Candidatura",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
-            )
-
-            // Subtítulo
-            Text(
-                text = "Dados do candidato",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            // Campos do formulário
-            OutlinedTextField(
-                value = viewModel.nome,
-                onValueChange = {
-                    viewModel.nome = it
-                    viewModel.limparErros()
-                },
-                label = { Text("Nome completo") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = viewModel.email,
-                onValueChange = {
-                    viewModel.email = it
-                    viewModel.limparErros()
-                },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = viewModel.curso,
-                onValueChange = {
-                    viewModel.curso = it
-                    viewModel.limparErros()
-                },
-                label = { Text("Curso") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = viewModel.numEstudante,
-                onValueChange = {
-                    viewModel.numEstudante = it
-                    viewModel.limparErros()
-                },
-                label = { Text("Número de estudante") },
-                modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
@@ -113,7 +119,234 @@ fun CandidaturaCreateView(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Erros
+            // ----------------- IDENTIFICAÇÃO -----------------
+            Text(
+                text = "Identificação do candidato",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            OutlinedTextField(
+                value = viewModel.nome,
+                onValueChange = {
+                    viewModel.nome = it
+                    viewModel.limparErros()
+                },
+                label = { Text("Nome") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = dataNascimento,
+                    onValueChange = { dataNascimento = it },
+                    label = { Text("Data de nascimento") },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = viewModel.cc,
+                    onValueChange = {
+                        viewModel.cc = it
+                        viewModel.limparErros()
+                    },
+                    label = { Text("CC/Passaporte") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = viewModel.telemovel,
+                    onValueChange = {
+                        viewModel.telemovel = it
+                        viewModel.limparErros()
+                    },
+                    label = { Text("Telemóvel") },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = viewModel.email,
+                    onValueChange = {
+                        viewModel.email = it
+                        viewModel.limparErros()
+                    },
+                    label = { Text("Email") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // ----------------- DADOS ACADÉMICOS -----------------
+            Text(
+                text = "Dados académicos",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                GrauCheckbox(
+                    label = "Licenciatura",
+                    selected = viewModel.grauCurso == GrauCurso.LICENCIATURA,
+                    onSelected = { viewModel.grauCurso = GrauCurso.LICENCIATURA }
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                GrauCheckbox(
+                    label = "Mestrado",
+                    selected = viewModel.grauCurso == GrauCurso.MESTRADO,
+                    onSelected = { viewModel.grauCurso = GrauCurso.MESTRADO }
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                GrauCheckbox(
+                    label = "CTeSP",
+                    selected = viewModel.grauCurso == GrauCurso.CTESP,
+                    onSelected = { viewModel.grauCurso = GrauCurso.CTESP }
+                )
+            }
+
+
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = viewModel.curso,
+                    onValueChange = {
+                        viewModel.curso = it
+                        viewModel.limparErros()
+                    },
+                    label = { Text("Curso") },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = viewModel.numEstudante,
+                    onValueChange = {
+                        viewModel.numEstudante = it
+                        viewModel.limparErros()
+                    },
+                    label = { Text("N.º estudante") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // ----------------- TIPOLOGIA DO PEDIDO -----------------
+            Text(
+                text = "Tipologia do pedido",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                ApoioCheckbox(
+                    label = "Produtos alimentares",
+                    checked = viewModel.apoioAlimentacao,
+                    onCheckedChange = { viewModel.apoioAlimentacao = it }
+                )
+                ApoioCheckbox(
+                    label = "Produtos de higiene pessoal",
+                    checked = viewModel.apoioHigiene,
+                    onCheckedChange = { viewModel.apoioHigiene = it }
+                )
+                ApoioCheckbox(
+                    label = "Produtos de limpeza",
+                    checked = viewModel.apoioLimpeza,
+                    onCheckedChange = { viewModel.apoioLimpeza = it }
+                )
+            }
+
+            // ----------------- OUTROS APOIOS -----------------
+            Text(
+                text = "Outros apoios",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            ApoioCheckbox(
+                label = "É apoiado(a) pelo Fundo de Apoio de Emergência Social (FAES)?",
+                checked = viewModel.faes,
+                onCheckedChange = { viewModel.faes = it }
+            )
+
+            ApoioCheckbox(
+                label = "É beneficiário(a) de alguma bolsa de estudo ou apoio?",
+                checked = viewModel.bolsa,
+                onCheckedChange = { viewModel.bolsa = it }
+            )
+
+            if (viewModel.bolsa) {
+                OutlinedTextField(
+                    value = viewModel.obsBolsa,
+                    onValueChange = { viewModel.obsBolsa = it },
+                    label = { Text("Se sim, indique a entidade e o valor") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // ----------------- UPLOAD DE DOCUMENTOS -----------------
+            Text(
+                text = "Upload de documentos",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Button(
+                onClick = { documentPickerLauncher.launch("*/*") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = GreenDark
+                )
+            ) {
+                Text("Arraste e solte ou clique para fazer upload")
+            }
+
+            if (selectedFileName != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Description,
+                            contentDescription = "Documento",
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = selectedFileName ?: "",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Text(
+                        text = "Remover",
+                        color = Color.Red,
+                        modifier = Modifier
+                            .clickable { selectedFileName = null }
+                            .padding(start = 8.dp)
+                    )
+                }
+            }
+
+
+            // ----------------- ERROS + SUBMETER (VERDE) -----------------
             if (submitState is ResultState.Error) {
                 Text(
                     text = submitState.message,
@@ -124,14 +357,13 @@ fun CandidaturaCreateView(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botão Submeter
             Button(
                 onClick = { viewModel.submeterCandidatura() },
                 enabled = submitState !is ResultState.Loading,
                 modifier = Modifier.fillMaxWidth(),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF004B3C),
-                    contentColor = androidx.compose.ui.graphics.Color.White
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GreenDark,
+                    contentColor = Color.White
                 )
             ) {
                 if (submitState is ResultState.Loading) {
@@ -142,7 +374,8 @@ fun CandidaturaCreateView(
                             modifier = Modifier
                                 .size(18.dp)
                                 .padding(end = 8.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            color = Color.White
                         )
                         Text("A enviar...")
                     }
@@ -151,5 +384,46 @@ fun CandidaturaCreateView(
                 }
             }
         }
+    }
+}
+
+// ----------------- HELPERS -----------------
+
+@Composable
+private fun ApoioCheckbox(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(text = label)
+    }
+}
+
+@Composable
+private fun GrauCheckbox(
+    label: String,
+    selected: Boolean,
+    onSelected: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
+        Checkbox(
+            checked = selected,
+            onCheckedChange = { onSelected() },
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = label
+        )
     }
 }
