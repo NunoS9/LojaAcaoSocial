@@ -1,19 +1,16 @@
 package com.ipca.sassolidaria.ui.utilizador
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material.icons.outlined.Restaurant
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,26 +21,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.core.UserType
+import com.ipca.sassolidaria.data.model.Produto
 import com.ipca.sassolidaria.ui.components.BottomBar
-import androidx.compose.foundation.clickable
-
-// Dados “mock” só para o layout do Home
-data class HomeProdutoItem(
-    val nome: String,
-    val quantidade: Int,
-    val tipo: String
-)
 
 @Composable
-fun HomeUtilizadorView(navController: NavController) {
-
-    // Lista de exemplo igual ao mockup
-    val produtos = listOf(
-        HomeProdutoItem("Arroz Basmati (1kg)", 50, "Alimentação"),
-        HomeProdutoItem("Azeite Virgem Extra (750ml)", 15, "Alimentação"),
-        HomeProdutoItem("Leite UHT (1L)", 80, "Alimentação")
-    )
+fun HomeUtilizadorView(
+    navController: NavController,
+    viewModel: HomeUtilizadorViewModel = viewModel()
+) {
+    val state = viewModel.uiState
 
     Scaffold(
         bottomBar = { BottomBar(navController = navController) }
@@ -53,7 +41,7 @@ fun HomeUtilizadorView(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF6F7FB))   // fundo clarinho
+                .background(Color(0xFFF6F7FB)) // fundo clarinho
         ) {
 
             // TÍTULO "Home"
@@ -68,16 +56,16 @@ fun HomeUtilizadorView(navController: NavController) {
 
             Spacer(Modifier.height(16.dp))
 
-            // BARRA "Notificações" com ícone de sino
+            // Botão Notificações
             Box(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .fillMaxWidth()
                     .height(40.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFE3F3ED))   // verde claro tipo mockup
+                    .background(Color(0xFFE3F3ED))
                     .clickable {
-                        navController.navigate(com.ipca.sassolidaria.core.Routes.NOTIFICACOES_UTILIZADOR)
+                        navController.navigate(Routes.NOTIFICACOES_UTILIZADOR)
                     },
                 contentAlignment = Alignment.CenterStart
             ) {
@@ -103,7 +91,7 @@ fun HomeUtilizadorView(navController: NavController) {
 
             Spacer(Modifier.height(24.dp))
 
-            // TÍTULO DA LISTA
+            // Título da lista
             Text(
                 text = "Todos os Itens em Stock",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
@@ -112,15 +100,29 @@ fun HomeUtilizadorView(navController: NavController) {
 
             Spacer(Modifier.height(12.dp))
 
-            // LISTA DE CARDS
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(produtos) { produto ->
-                    ProdutoStockCard(produto)
+            when {
+                state.isLoading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                state.errorMessage != null -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(state.errorMessage!!, color = Color.Red)
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(state.produtos) { produto ->
+                            ProdutoStockCard(produto, viewModel)
+                        }
+                    }
                 }
             }
         }
@@ -128,7 +130,13 @@ fun HomeUtilizadorView(navController: NavController) {
 }
 
 @Composable
-private fun ProdutoStockCard(item: HomeProdutoItem) {
+private fun ProdutoStockCard(
+    item: Produto,
+    viewModel: HomeUtilizadorViewModel
+) {
+    val icon = viewModel.getIconForTipo(item.tipo_produto)
+    val tipoLabel = viewModel.tipoToLabel(item.tipo_produto)
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -144,7 +152,7 @@ private fun ProdutoStockCard(item: HomeProdutoItem) {
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // Ícone tipo talheres
+            // Ícone dinâmico consoante TipoProduto
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -153,7 +161,7 @@ private fun ProdutoStockCard(item: HomeProdutoItem) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Restaurant,
+                    imageVector = icon,
                     contentDescription = "Produto",
                     tint = Color(0xFF4F4F4F)
                 )
@@ -161,24 +169,25 @@ private fun ProdutoStockCard(item: HomeProdutoItem) {
 
             Spacer(Modifier.width(16.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
+
                 Text(
                     text = item.nome,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
+
                 Spacer(Modifier.height(4.dp))
+
                 Text(
-                    text = "${item.quantidade} disponível",
+                    text = "Quantidade: ${item.quantidade_disponivel}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF6F6F6F)
                 )
+
                 Spacer(Modifier.height(2.dp))
+
                 Text(
-                    text = "Tipo: ${item.tipo}",
+                    text = "Tipo: $tipoLabel",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF6F6F6F)
                 )
@@ -196,4 +205,3 @@ fun HomeUtilizadorPreview() {
 
     HomeUtilizadorView(navController = nav)
 }
-
