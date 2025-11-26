@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,18 +35,15 @@ fun PerfilColaboradorView(
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        bottomBar = bottomBar
-    ) { padding ->
+    Scaffold(bottomBar = bottomBar) { padding ->
 
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(16.dp)
                 .fillMaxSize()
         ) {
 
-            // === HEADER SEM CARD (igual mockup) ===
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -63,16 +61,8 @@ fun PerfilColaboradorView(
                 Spacer(Modifier.width(16.dp))
 
                 Column {
-                    Text(
-                        text = state.nome,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Colaborador SAS",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
+                    Text(state.nome, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Colaborador SAS", fontSize = 14.sp, color = Color.Gray)
                 }
             }
 
@@ -99,57 +89,53 @@ fun PerfilColaboradorView(
 
             Spacer(Modifier.weight(1f))
 
-            // === BOTÃO SAIR CORRIGIDO ===
             Button(
                 onClick = { showLogoutDialog = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp),
+                modifier = Modifier.fillMaxWidth().height(46.dp),
                 shape = RoundedCornerShape(6.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = RedButton,
-                    contentColor = Color.White
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = RedButton)
             ) {
-                Text("Sair", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text("Sair", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
         }
     }
 
-    // === DIALOG EDITAR DADOS ===
+    // ---------- EDITAR DADOS ----------
     if (showEditDialog) {
         EditarDadosDialog(
             nomeInicial = state.nome,
-            emailInicial = state.email,
+            email = state.email,
             onCancel = { showEditDialog = false },
-            onSave = { nome, email, success, error ->
-                viewModel.editUserData(
-                    nome,
-                    email,
+            onSave = { nomeNovo, success, error ->
+
+                viewModel.updateName(
+                    newName = nomeNovo,
                     onSuccess = { success() },
-                    onError = { error() }
+                    onError = { msg -> error(msg) }
                 )
             },
             onAutoClose = { showEditDialog = false }
         )
     }
 
-    // === DIALOG ALTERAR SENHA ===
+    // ---------- ALTERAR PASSWORD ----------
     if (showPasswordDialog) {
         AlterarSenhaDialog(
             onCancel = { showPasswordDialog = false },
-            onSave = { pass, success, error ->
+            onSave = { passAtual, novaPass, success, error ->
+
                 viewModel.updatePassword(
-                    pass,
+                    currentPassword = passAtual,
+                    newPassword = novaPass,
                     onSuccess = { success() },
-                    onError = { error() }
+                    onError = { msg -> error(msg) }
                 )
             },
             onAutoClose = { showPasswordDialog = false }
         )
     }
 
-    // === DIALOG LOGOUT ===
+    // ---------- LOGOUT ----------
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -162,9 +148,7 @@ fun PerfilColaboradorView(
                 }) { Text("SIM") }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("NÃO")
-                }
+                TextButton(onClick = { showLogoutDialog = false }) { Text("NÃO") }
             }
         )
     }
@@ -172,28 +156,19 @@ fun PerfilColaboradorView(
 
 @Composable
 fun PerfilItem(icon: Int, text: String, onClick: () -> Unit) {
-
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Icon(
             painter = painterResource(id = icon),
             contentDescription = text,
             tint = Green,
             modifier = Modifier.size(26.dp)
         )
-
         Spacer(Modifier.width(16.dp))
-
         Text(text, fontSize = 15.sp)
-
         Spacer(Modifier.weight(1f))
-
         Icon(
             painter = painterResource(id = R.drawable.ic_arrow_right),
             contentDescription = null,
@@ -206,13 +181,12 @@ fun PerfilItem(icon: Int, text: String, onClick: () -> Unit) {
 @Composable
 fun EditarDadosDialog(
     nomeInicial: String,
-    emailInicial: String,
+    email: String,
     onCancel: () -> Unit,
-    onSave: (String, String, () -> Unit, () -> Unit) -> Unit,
+    onSave: (String, () -> Unit, (String) -> Unit) -> Unit,
     onAutoClose: () -> Unit
 ) {
     var nome by remember { mutableStateOf(nomeInicial) }
-    var email by remember { mutableStateOf(emailInicial) }
 
     var success by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
@@ -250,45 +224,46 @@ fun EditarDadosDialog(
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {},
                     label = { Text("Email") },
+                    readOnly = true,
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = Color.Gray,
+                        disabledLabelColor = Color.Gray,
+                        disabledBorderColor = Color.LightGray
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-
-                onSave(
-                    nome,
-                    email,
-                    {
-                        error = ""
-                        success = "Dados alterados com sucesso!"
-
-                        scope.launch {
-                            delay(1500)
-                            onAutoClose()
+            Button(
+                onClick = {
+                    onSave(
+                        nome,
+                        {
+                            error = ""
+                            success = "Nome atualizado!"
+                            scope.launch {
+                                delay(1500)
+                                onAutoClose()
+                            }
+                        },
+                        { msg ->
+                            success = ""
+                            error = msg
                         }
-                    },
-                    {
-                        error = "Preencha todos os campos!"
-                        success = ""
-                    }
-                )
-
-            }) {
-                Text("Guardar")
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Green),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Guardar", color = Color.White)
             }
         },
         dismissButton = {
-            TextButton(onClick = {
-                success = ""
-                error = ""
-                onCancel()
-            }) {
-                Text("Cancelar")
-            }
+            TextButton(onClick = { onCancel() }) { Text("Cancelar") }
         }
     )
 }
@@ -296,10 +271,11 @@ fun EditarDadosDialog(
 @Composable
 fun AlterarSenhaDialog(
     onCancel: () -> Unit,
-    onSave: (String, () -> Unit, () -> Unit) -> Unit,
+    onSave: (String, String, () -> Unit, (String) -> Unit) -> Unit,
     onAutoClose: () -> Unit
 ) {
-    var password by remember { mutableStateOf("") }
+    var passwordAtual by remember { mutableStateOf("") }
+    var novaPassword by remember { mutableStateOf("") }
 
     var success by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
@@ -307,11 +283,7 @@ fun AlterarSenhaDialog(
     val scope = rememberCoroutineScope()
 
     AlertDialog(
-        onDismissRequest = {
-            success = ""
-            error = ""
-            onCancel()
-        },
+        onDismissRequest = { onCancel() },
         title = { Text("Alterar Senha") },
         text = {
             Column {
@@ -327,43 +299,52 @@ fun AlterarSenhaDialog(
                 }
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Nova Senha") },
-                    modifier = Modifier.fillMaxWidth()
+                    value = passwordAtual,
+                    onValueChange = { passwordAtual = it },
+                    label = { Text("Password Atual") },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation()
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = novaPassword,
+                    onValueChange = { novaPassword = it },
+                    label = { Text("Nova Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation()
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-
-                onSave(
-                    password,
-                    {
-                        error = ""
-                        success = "Senha alterada com sucesso!"
-
-                        scope.launch {
-                            delay(1500)
-                            onAutoClose()
+            Button(
+                onClick = {
+                    onSave(
+                        passwordAtual,
+                        novaPassword,
+                        {
+                            error = ""
+                            success = "Senha alterada com sucesso!"
+                            scope.launch {
+                                delay(1500)
+                                onAutoClose()
+                            }
+                        },
+                        { msg ->
+                            success = ""
+                            error = msg
                         }
-                    },
-                    {
-                        error = "Insira uma senha válida!"
-                        success = ""
-                    }
-                )
-
-            }) {
-                Text("Guardar")
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Green),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Guardar", color = Color.White)
             }
         },
         dismissButton = {
-            TextButton(onClick = {
-                success = ""
-                error = ""
-                onCancel()
-            }) { Text("Cancelar") }
+            TextButton(onClick = { onCancel() }) { Text("Cancelar") }
         }
     )
 }

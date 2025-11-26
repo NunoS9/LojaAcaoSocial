@@ -1,12 +1,11 @@
 package com.ipca.sassolidaria.ui.colaborador.perfil
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class PerfilColaboradorViewModel(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
@@ -22,7 +21,10 @@ class PerfilColaboradorViewModel(
 
     private fun loadUser() {
         val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid).get()
+
+        firestore.collection("users")
+            .document(uid)
+            .get()
             .addOnSuccessListener { doc ->
                 _uiState.value = _uiState.value.copy(
                     nome = doc.getString("nome") ?: "",
@@ -31,59 +33,63 @@ class PerfilColaboradorViewModel(
             }
     }
 
-    fun editUserData(
+    /**
+     * Atualizar APENAS o nome do utilizador (Firestore)
+     */
+    fun updateName(
         newName: String,
-        newEmail: String,
         onSuccess: () -> Unit,
-        onError: () -> Unit
+        onError: (String) -> Unit
     ) {
-
-        if (newName.isBlank() || newEmail.isBlank()) {
-            onError()
+        if (newName.isBlank()) {
+            onError("O nome não pode estar vazio.")
             return
         }
 
-        val uid = auth.currentUser!!.uid
+        val uid = auth.currentUser?.uid ?: return onError("Sessão expirada.")
 
-        viewModelScope.launch {
-            try {
-                auth.currentUser!!.updateEmail(newEmail)
-                    .addOnSuccessListener {
-
-                        firestore.collection("users").document(uid)
-                            .update(mapOf("nome" to newName, "email" to newEmail))
-                            .addOnSuccessListener {
-                                _uiState.value = _uiState.value.copy(
-                                    nome = newName,
-                                    email = newEmail
-                                )
-                                onSuccess()
-                            }
-                            .addOnFailureListener { onError() }
-
-                    }
-                    .addOnFailureListener { onError() }
-
-            } catch (e: Exception) {
-                onError()
+        firestore.collection("users")
+            .document(uid)
+            .update("nome", newName)
+            .addOnSuccessListener {
+                _uiState.value = _uiState.value.copy(nome = newName)
+                onSuccess()
             }
-        }
+            .addOnFailureListener {
+                onError("Erro ao atualizar nome.")
+            }
     }
 
+    /**
+     * Atualizar password (Auth)
+     */
     fun updatePassword(
+        currentPassword: String,
         newPassword: String,
         onSuccess: () -> Unit,
-        onError: () -> Unit
+        onError: (String) -> Unit
     ) {
-
-        if (newPassword.isBlank()) {
-            onError()
+        if (currentPassword.isBlank() || newPassword.isBlank()) {
+            onError("Preencha todos os campos.")
             return
         }
 
-        auth.currentUser!!.updatePassword(newPassword)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onError() }
+        val user = auth.currentUser ?: return onError("Sessão expirada.")
+        val email = user.email ?: return onError("Email não encontrado.")
+
+        val credential = EmailAuthProvider.getCredential(email, currentPassword)
+
+        user.reauthenticate(credential)
+            .addOnSuccessListener {
+                user.updatePassword(newPassword)
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener {
+                        onError("Erro ao atualizar palavra-passe: ${it.message}")
+                    }
+            }
+            .addOnFailureListener {
+                onError("Password atual incorreta.")
+            }
     }
 }
 

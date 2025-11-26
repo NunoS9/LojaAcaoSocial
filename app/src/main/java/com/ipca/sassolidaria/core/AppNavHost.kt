@@ -23,6 +23,7 @@ import com.ipca.sassolidaria.ui.utilizador.perfil.PerfilUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.NotificacoesUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
+import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
 @Composable
 fun AppNavHost() {
 
@@ -95,6 +96,20 @@ fun AppNavHost() {
 
             HomeBeneficiarioView(navController = navController)
         }
+
+        // PERFIL BENEFICIARIO
+        composable(Routes.PERFIL_BENEFICIARIO) {
+            PerfilBeneficiarioView(
+                onLogoutConfirmed = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(0)
+                    }
+                },
+                bottomBar = { BottomBar(navController = navController) }
+            )
+        }
+
+
 
         // -------- HOME UTILIZADOR --------
         composable(Routes.HOME_UTILIZADOR) {
