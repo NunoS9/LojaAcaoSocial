@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,6 +23,8 @@ import com.ipca.sassolidaria.core.UserType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 
 @Composable
 fun LoginView(
@@ -43,9 +46,18 @@ fun LoginView(
             Spacer(Modifier.height(60.dp))
 
             Image(
-                painter = painterResource(R.drawable.icon_sassolidaria),
+                painter = painterResource(R.drawable.logo),
                 contentDescription = null,
                 modifier = Modifier.size(200.dp)
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Bem-vindo de volta!",
+                fontSize = 22.sp,
+                color = greenPrimary,
+                fontWeight = FontWeight.Bold
             )
 
             Spacer(Modifier.height(30.dp))
@@ -55,7 +67,14 @@ fun LoginView(
                 value = state.email,
                 onValueChange = { viewModel.onEmailChange(it) },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Email,
+                        contentDescription = "Email",
+                        tint = Color.Gray
+                    )
+                }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -72,6 +91,13 @@ fun LoginView(
                     VisualTransformation.None
                 else
                     PasswordVisualTransformation(),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Lock,
+                        contentDescription = "Password",
+                        tint = Color.Gray
+                    )
+                },
                 trailingIcon = {
                     val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
                     val desc = if (passwordVisible) "Ocultar palavra-passe" else "Mostrar palavra-passe"
@@ -95,12 +121,10 @@ fun LoginView(
                             UserType.UTILIZADOR -> Routes.HOME_UTILIZADOR
                         }
 
-                        // navegar
                         navController?.navigate(route) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
 
-                        // guardar tipo (para a BottomBar)
                         navController?.currentBackStackEntry
                             ?.savedStateHandle
                             ?.set("userType", tipo.name)
@@ -119,12 +143,10 @@ fun LoginView(
 
             Spacer(Modifier.height(20.dp))
 
-            // ERROS
             if (state.errorMessage.isNotEmpty()) {
                 Text(state.errorMessage, color = Color.Red, fontSize = 15.sp)
             }
 
-            // SUCESSO
             if (state.successMessage.isNotEmpty()) {
                 Text(state.successMessage, color = Color.Green, fontSize = 15.sp)
             }
@@ -151,7 +173,6 @@ fun LoginView(
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun LoginViewPreview() {
