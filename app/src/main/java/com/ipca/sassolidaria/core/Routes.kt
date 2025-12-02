@@ -13,15 +13,18 @@ object Routes {
 
     // Colaborador
 
+    const val PRODUTOS_LIST = "produtos_list"
 
+    const val DOACOES_LIST = "doacoes_list"
+
+    const val CANDIDATURAS_LIST = "candidaturas_list"
     const val PERFIL_COLABORADOR = "perfil_colaborador"
 
-    const val PEDIDOS_COLABORADOR = "pedidos_colaborador"
-
-    const val PEDIDO_COLABORADOR_CREATE = "pedido_colaborador_create"
 
     // Beneficiário
     const val PEDIDOS_LIST = "pedidos_list"
+
+    const val PEDIDOS_CREAT = "pedidos_creat"
     const val ENTREGAS_LIST = "entregas_list"
     const val MARCACOES_LIST = "marcacoes_list"
     const val PERFIL_BENEFICIARIO = "perfil_beneficiario"
