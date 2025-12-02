@@ -24,6 +24,8 @@ import com.ipca.sassolidaria.ui.utilizador.NotificacoesUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
+import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidosColaboradorListView
+import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidoColaboradorCreateView
 @Composable
 fun AppNavHost() {
 
@@ -133,6 +135,15 @@ fun AppNavHost() {
 
         composable(Routes.NOTIFICACOES_UTILIZADOR) {
             NotificacoesUtilizadorView(navController = navController)
+        }
+
+        // PEDIDOS COLABORADOR
+        composable(Routes.PEDIDOS_COLABORADOR) {
+            PedidosColaboradorListView(navController = navController)
+        }
+
+        composable(Routes.PEDIDO_COLABORADOR_CREATE) {
+            PedidoColaboradorCreateView(navController = navController)
         }
     }
 }
