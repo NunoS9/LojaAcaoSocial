@@ -2,6 +2,6 @@ package com.ipca.sassolidaria.data.model.enums
 
 enum class EstadoPedido {
     PENDENTE,
-    ENTREGUE,
+    ACEITE,
     CANCELADO
 }

@@ -1,4 +1,4 @@
-package com.ipca.sassolidaria.ui.colaborador.pedidos
+package com.ipca.sassolidaria.ui.beneficiario.pedidos
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,7 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,32 +26,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.ipca.sassolidaria.data.model.enums.EstadoPedido
-import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.core.Routes
+import com.ipca.sassolidaria.ui.components.BottomBar
+import com.ipca.sassolidaria.data.model.enums.EstadoPedido
+import com.ipca.sassolidaria.utils.ResultState
 
 
 private val GreenDark = Color(0xFF2E7D32)
 
-data class PedidoUi(
-    val id: String,
-    val data: String,
-    val estado: EstadoPedido
-)
-
 @Composable
 fun PedidosListView(
-    navController: NavController
+    navController: NavController,
+    viewModel: PedidosListViewModel = viewModel()
 ) {
-    // Por agora dados mockados só para o layout
-    val pedidos = remember {
-        listOf(
-            PedidoUi("Pedido 2023001", "26/10/2023", EstadoPedido.ENTREGUE),
-            PedidoUi("Pedido 2023002", "15/09/2023", EstadoPedido.PENDENTE),
-            PedidoUi("Pedido 2023003", "01/08/2023", EstadoPedido.CANCELADO)
-        )
-    }
+    val state = viewModel.pedidosState
 
     Scaffold(
         bottomBar = { BottomBar(navController = navController) }
@@ -60,20 +51,18 @@ fun PedidosListView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(16.dp)
         ) {
 
-            // Top bar tipo mockup
+            // Top bar mockup
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = "Voltar"
-                    )
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Voltar")
                 }
+
                 Text(
                     text = "Pedidos",
                     style = MaterialTheme.typography.titleMedium,
@@ -81,32 +70,55 @@ fun PedidosListView(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center
                 )
-                IconButton(
-                    onClick = {
-                        navController.navigate(Routes.PEDIDOS_CREAT)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = "Criar pedido"
-                    )
+
+                IconButton(onClick = {
+                    navController.navigate(Routes.PEDIDOS_CREATE)
+                }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Criar pedido")
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(pedidos) { pedido ->
-                    PedidoCard(
-                        pedido = pedido,
-                        onClickDetalhes = {
-                            // TODO: navegar para detalhes do pedido do colaborador
-                        }
-                    )
+            when (state) {
+                is ResultState.Loading -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
+
+                is ResultState.Error -> Text(
+                    text = state.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                is ResultState.Success -> {
+                    val pedidos = state.data
+
+                    if (pedidos.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Ainda não existem pedidos.")
+                        }
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(pedidos) { pedido ->
+                                PedidoCard(
+                                    pedido = pedido,
+                                    {
+                                        navController.navigate("${Routes.PEDIDO_DETAILS_BENEFICIARIO}/${pedido.id}") }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                ResultState.Idle -> {}
             }
         }
     }
@@ -121,16 +133,10 @@ private fun PedidoCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClickDetalhes() },
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -151,16 +157,11 @@ private fun PedidoCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            EstadoPedidoChip(estado = pedido.estado)
+            EstadoPedidoChip(pedido.estado)
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Divider(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp),
-                color = Color(0xFFE0E0E0)
-            )
+            Divider(color = Color(0xFFE0E0E0))
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -179,22 +180,17 @@ private fun PedidoCard(
 @Composable
 private fun EstadoPedidoChip(estado: EstadoPedido) {
     val (texto, bg, fg) = when (estado) {
-        EstadoPedido.ENTREGUE -> Triple("Entregue", GreenDark, Color.White)
-        EstadoPedido.PENDENTE -> Triple("Pendente", Color(0xFFFFECB3), Color(0xFF8D6E63))
+        EstadoPedido.ACEITE -> Triple("Entregue", GreenDark, Color.White)
+        EstadoPedido.PENDENTE -> Triple("Pendente", Color(0xFFFFF3CD), Color(0xFF8D6E63))
         EstadoPedido.CANCELADO -> Triple("Cancelado", Color(0xFFFFCDD2), Color(0xFFC62828))
         else -> Triple(estado.name, Color.LightGray, Color.DarkGray)
     }
 
     Box(
         modifier = Modifier
-            .background(color = bg, shape = MaterialTheme.shapes.large)
+            .background(bg, shape = MaterialTheme.shapes.large)
             .padding(horizontal = 12.dp, vertical = 4.dp)
     ) {
-        Text(
-            text = texto,
-            color = fg,
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 1
-        )
+        Text(texto, color = fg, style = MaterialTheme.typography.labelSmall)
     }
 }

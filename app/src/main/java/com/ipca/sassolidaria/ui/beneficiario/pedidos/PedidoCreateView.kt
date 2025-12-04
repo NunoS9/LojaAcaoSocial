@@ -1,4 +1,4 @@
-package com.ipca.sassolidaria.ui.colaborador.pedidos
+package com.ipca.sassolidaria.ui.beneficiario.pedidos
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +15,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,16 +25,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ipca.sassolidaria.ui.components.BottomBar
+import com.ipca.sassolidaria.utils.ResultState
 
 private val GreenDark = Color(0xFF2E7D32)
 
 @Composable
 fun PedidoCreateView(
-    navController: NavController
+    navController: NavController,
+    viewModel: PedidoCreateViewModel = viewModel()
 ) {
     var detalhes by remember { mutableStateOf("") }
+    val submitState = viewModel.submitState
+
+    // Quando criar com sucesso -> volta para a lista
+    LaunchedEffect(submitState) {
+        if (submitState is ResultState.Success) {
+            navController.popBackStack()
+        }
+    }
 
     Scaffold(
         bottomBar = { BottomBar(navController = navController) }
@@ -74,20 +87,29 @@ fun PedidoCreateView(
 
             OutlinedTextField(
                 value = detalhes,
-                onValueChange = { detalhes = it },
-                label = { Text("Adicione quaisquer informações adicionais relevantes para o pedido.") },
+                onValueChange = {
+                    detalhes = it
+                    viewModel.limparErros()
+                },
+                label = { Text("Adicione quaisquer informações relevantes para o pedido") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
             )
 
+            if (submitState is ResultState.Error) {
+                Text(
+                    text = submitState.message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = {
-                    // TODO: chamar ViewModel / repo para criar pedido
-                    navController.popBackStack()
-                },
+                onClick = { viewModel.criarPedido(detalhes) },
+                enabled = submitState !is ResultState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
@@ -96,7 +118,20 @@ fun PedidoCreateView(
                     contentColor = Color.White
                 )
             ) {
-                Text("Finalizar Pedido")
+                if (submitState is ResultState.Loading) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .padding(end = 8.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
+                        Text("A enviar...")
+                    }
+                } else {
+                    Text("Finalizar Pedido")
+                }
             }
         }
     }
