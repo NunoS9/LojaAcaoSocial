@@ -8,10 +8,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.navArgument
 import com.ipca.sassolidaria.auth.LoginView
 import com.ipca.sassolidaria.auth.RegisterView
 import com.ipca.sassolidaria.auth.RecoverPasswordView
@@ -27,9 +29,12 @@ import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidosListView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoCreateView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoDetailsView
+import com.ipca.sassolidaria.ui.colaborador.candidaturas.CandidaturasListView
+import com.ipca.sassolidaria.ui.colaborador.candidaturas.CandidaturaDetailView
 import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutosListView
 import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutoEditView
 import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutoCreateView
+
 @Composable
 fun AppNavHost() {
 
@@ -76,6 +81,18 @@ fun AppNavHost() {
             HomeColaboradorView(navController = navController)
         }
 
+        composable(Routes.PRODUTOS_LIST) {
+            ProdutosListView(navController)
+        }
+
+        composable(Routes.PRODUTO_CREATE) {
+            ProdutoCreateView(navController)
+        }
+
+        composable(Routes.PRODUTO_EDIT) { backStackEntry ->
+            ProdutoEditView(navController = navController)
+        }
+
         // PERFIL COLABORADOR
         composable(Routes.PERFIL_COLABORADOR) {
 
@@ -93,16 +110,29 @@ fun AppNavHost() {
                 bottomBar = { BottomBar(navController = navController) }
             )
         }
-        composable(Routes.PRODUTOS_LIST) {
-            ProdutosListView(navController)
+
+        composable(Routes.CANDIDATURAS_LIST) {
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("userType", "COLABORADOR")
+
+            CandidaturasListView(navController = navController)
         }
 
-        composable(Routes.PRODUTO_CREATE) {
-            ProdutoCreateView(navController)
-        }
+        // CANDIDATURAS (DETALHE) - COLABORADOR
+        composable(
+            route = "${Routes.CANDIDATURA_DETAIL_COLABORADOR}/{candidaturaId}",
+            arguments = listOf(
+                navArgument("candidaturaId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            // Recuperar o ID passado na rota
+            val id = backStackEntry.arguments?.getString("candidaturaId") ?: ""
 
-        composable(Routes.PRODUTO_EDIT) { backStackEntry ->
-            ProdutoEditView(navController = navController)
+            CandidaturaDetailView(
+                navController = navController,
+                candidaturaId = id
+            )
         }
 
         // -------- HOME BENEFICIARIO --------
@@ -116,9 +146,6 @@ fun AppNavHost() {
 
         // PERFIL BENEFICIARIO
         composable(Routes.PERFIL_BENEFICIARIO) {
-            navController.currentBackStackEntry
-                ?.savedStateHandle
-                ?.set("userType", "BENEFICIARIO")
             PerfilBeneficiarioView(
                 onLogoutConfirmed = {
                     navController.navigate(Routes.LOGIN) {
@@ -155,7 +182,7 @@ fun AppNavHost() {
             NotificacoesUtilizadorView(navController = navController)
         }
 
-        // PEDIDOS BENEFICIARIO
+        // PEDIDOS COLABORADOR
         composable(Routes.PEDIDOS_LIST) {
             PedidosListView(navController = navController)
         }

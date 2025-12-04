@@ -35,4 +35,5 @@ object Routes {
     const val NOTIFICACOES_UTILIZADOR = "notificacoes_utilizador"
     const val CANDIDATURA_UTILIZADOR = "candidatura_utilizador"
     const val CANDIDATURA_CREATE = "candidatura_create"
+    const val CANDIDATURA_DETAIL_COLABORADOR = "candidatura_detail_colaborador"
 }
