@@ -116,6 +116,9 @@ fun AppNavHost() {
 
         // PERFIL BENEFICIARIO
         composable(Routes.PERFIL_BENEFICIARIO) {
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("userType", "BENEFICIARIO")
             PerfilBeneficiarioView(
                 onLogoutConfirmed = {
                     navController.navigate(Routes.LOGIN) {
