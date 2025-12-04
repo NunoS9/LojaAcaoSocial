@@ -14,7 +14,8 @@ object Routes {
     // Colaborador
 
     const val PRODUTOS_LIST = "produtos_list"
-
+    const val PRODUTO_CREATE = "produto_create"
+    const val PRODUTO_EDIT = "produto_edit/{id}"
     const val DOACOES_LIST = "doacoes_list"
 
     const val CANDIDATURAS_LIST = "candidaturas_list"

@@ -24,9 +24,8 @@ import com.ipca.sassolidaria.ui.utilizador.NotificacoesUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
-import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidosListView
-import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoCreateView
-import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoDetailsView
+import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidosListView
+import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidoCreateView
 @Composable
 fun AppNavHost() {
 
@@ -138,23 +137,13 @@ fun AppNavHost() {
             NotificacoesUtilizadorView(navController = navController)
         }
 
-        // PEDIDOS BENEFICIARIO
+        // PEDIDOS COLABORADOR
         composable(Routes.PEDIDOS_LIST) {
             PedidosListView(navController = navController)
         }
 
-        composable(Routes.PEDIDOS_CREATE) {
+        composable(Routes.PEDIDOS_CREAT) {
             PedidoCreateView(navController = navController)
-        }
-
-        composable(
-            route = "${Routes.PEDIDO_DETAILS_BENEFICIARIO}/{pedidoId}"
-        ) { backStackEntry ->
-            val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
-            PedidoDetailsView(
-                navController = navController,
-                pedidoId = pedidoId
-            )
         }
     }
 }
