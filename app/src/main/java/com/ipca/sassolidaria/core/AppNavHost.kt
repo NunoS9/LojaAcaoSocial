@@ -26,6 +26,9 @@ import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
 import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidosListView
 import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidoCreateView
+import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutosListView
+import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutoEditView
+import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutoCreateView
 @Composable
 fun AppNavHost() {
 
@@ -144,6 +147,18 @@ fun AppNavHost() {
 
         composable(Routes.PEDIDOS_CREAT) {
             PedidoCreateView(navController = navController)
+        }
+
+        composable(Routes.PRODUTOS_LIST) {
+            ProdutosListView(navController)
+        }
+
+        composable(Routes.PRODUTO_CREATE) {
+            ProdutoCreateView(navController)
+        }
+
+        composable(Routes.PRODUTO_EDIT) { backStackEntry ->
+            ProdutoEditView(navController = navController)
         }
     }
 }
