@@ -24,8 +24,12 @@ import com.ipca.sassolidaria.ui.utilizador.NotificacoesUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
-import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidosListView
-import com.ipca.sassolidaria.ui.colaborador.pedidos.PedidoCreateView
+import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidosListView
+import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoCreateView
+import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoDetailsView
+import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutosListView
+import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutoEditView
+import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutoCreateView
 @Composable
 fun AppNavHost() {
 
@@ -89,6 +93,17 @@ fun AppNavHost() {
                 bottomBar = { BottomBar(navController = navController) }
             )
         }
+        composable(Routes.PRODUTOS_LIST) {
+            ProdutosListView(navController)
+        }
+
+        composable(Routes.PRODUTO_CREATE) {
+            ProdutoCreateView(navController)
+        }
+
+        composable(Routes.PRODUTO_EDIT) { backStackEntry ->
+            ProdutoEditView(navController = navController)
+        }
 
         // -------- HOME BENEFICIARIO --------
         composable(Routes.HOME_BENEFICIARIO) {
@@ -137,13 +152,23 @@ fun AppNavHost() {
             NotificacoesUtilizadorView(navController = navController)
         }
 
-        // PEDIDOS COLABORADOR
+        // PEDIDOS BENEFICIARIO
         composable(Routes.PEDIDOS_LIST) {
             PedidosListView(navController = navController)
         }
 
-        composable(Routes.PEDIDOS_CREAT) {
+        composable(Routes.PEDIDOS_CREATE) {
             PedidoCreateView(navController = navController)
+        }
+
+        composable(
+            route = "${Routes.PEDIDO_DETAILS_BENEFICIARIO}/{pedidoId}"
+        ) { backStackEntry ->
+            val pedidoId = backStackEntry.arguments?.getString("pedidoId") ?: ""
+            PedidoDetailsView(
+                navController = navController,
+                pedidoId = pedidoId
+            )
         }
     }
 }
