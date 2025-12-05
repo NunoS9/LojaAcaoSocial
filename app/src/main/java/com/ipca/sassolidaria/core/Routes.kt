@@ -20,7 +20,8 @@ object Routes {
 
     const val CANDIDATURAS_LIST = "candidaturas_list"
     const val PERFIL_COLABORADOR = "perfil_colaborador"
-
+    const val DOACAO_CREATE = "doacao_create"
+    const val DOACAO_DETAIL = "doacao_detail"
 
     // Beneficiário
     const val PEDIDOS_LIST = "pedidos_list"
