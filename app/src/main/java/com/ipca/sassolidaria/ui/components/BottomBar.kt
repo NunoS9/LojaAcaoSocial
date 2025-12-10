@@ -57,8 +57,8 @@ fun BottomBar(navController: NavController) {
         UserType.BENEFICIARIO -> listOf(
             BottomNavItem("Início", Routes.HOME_BENEFICIARIO, Icons.Filled.Home, Icons.Outlined.Home),
             BottomNavItem("Pedidos", Routes.PEDIDOS_LIST, Icons.Filled.ShoppingBag, Icons.Outlined.ShoppingBag),
-            BottomNavItem("Entregas", Routes.ENTREGAS_LIST, Icons.Filled.LocalShipping, Icons.Outlined.LocalShipping),
             BottomNavItem("Marcações", Routes.MARCACOES_LIST, Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth),
+            BottomNavItem("Entregas", Routes.ENTREGAS_LIST, Icons.Filled.LocalShipping, Icons.Outlined.LocalShipping),
             BottomNavItem("Perfil", Routes.PERFIL_BENEFICIARIO, Icons.Filled.Person, Icons.Outlined.Person),
         )
 

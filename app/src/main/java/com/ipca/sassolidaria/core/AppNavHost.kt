@@ -39,6 +39,8 @@ import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidosListView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoCreateView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoDetailsView
+import com.ipca.sassolidaria.ui.beneficiario.marcacoes.MarcacoesBeneficiarioView
+
 
 import com.ipca.sassolidaria.ui.utilizador.HomeUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.perfil.PerfilUtilizadorView
@@ -139,7 +141,7 @@ fun AppNavHost() {
             )
         }
 
-        /* ------------------------- HOME BENEFICIÁRIO ------------------------- */
+        /* ------------------------- BENEFICIÁRIO ------------------------- */
         composable(Routes.HOME_BENEFICIARIO) {
             navController.currentBackStackEntry?.savedStateHandle?.set("userType", "BENEFICIARIO")
             HomeBeneficiarioView(navController)
@@ -164,6 +166,9 @@ fun AppNavHost() {
             PedidoDetailsView(navController, entry.arguments?.getString("pedidoId") ?: "")
         }
 
+        composable(Routes.MARCACOES_LIST) {
+            MarcacoesBeneficiarioView(navController = navController)
+        }
         /* ------------------------- HOME UTILIZADOR ------------------------- */
         composable(Routes.HOME_UTILIZADOR) {
             navController.currentBackStackEntry?.savedStateHandle?.set("userType", "UTILIZADOR")
