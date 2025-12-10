@@ -40,6 +40,7 @@ import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidosListView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoCreateView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoDetailsView
 import com.ipca.sassolidaria.ui.beneficiario.marcacoes.MarcacoesBeneficiarioView
+import com.ipca.sassolidaria.ui.beneficiario.entregas.EntregasListView
 
 
 import com.ipca.sassolidaria.ui.utilizador.HomeUtilizadorView
@@ -169,6 +170,11 @@ fun AppNavHost() {
         composable(Routes.MARCACOES_LIST) {
             MarcacoesBeneficiarioView(navController = navController)
         }
+
+        composable(Routes.ENTREGAS_LIST) {
+            EntregasListView(navController = navController)
+        }
+
         /* ------------------------- HOME UTILIZADOR ------------------------- */
         composable(Routes.HOME_UTILIZADOR) {
             navController.currentBackStackEntry?.savedStateHandle?.set("userType", "UTILIZADOR")
