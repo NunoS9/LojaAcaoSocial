@@ -4,18 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,8 +16,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
@@ -35,6 +25,8 @@ private val ChipBlue = Color(0xFFE0E7FF)
 private val ChipBlueText = Color(0xFF1E40AF)
 private val ChipYellow = Color(0xFFFFF3CD)
 private val ChipYellowText = Color(0xFF8D6E63)
+private val ChipRed = Color(0xFFFFCDD2)
+private val ChipRedText = Color(0xFFC62828)
 private val ChipGreen = Color(0xFFE0F2F1)
 private val ChipGreenText = Color(0xFF2E7D32)
 
@@ -44,6 +36,9 @@ fun EntregasListView(
     viewModel: EntregasListViewModel = viewModel()
 ) {
     val state = viewModel.entregasState
+    val detalhesState = viewModel.detalhesState
+
+    var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { BottomBar(navController = navController) }
@@ -74,7 +69,7 @@ fun EntregasListView(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.width(48.dp)) // espaço para equilibrar
+                Spacer(modifier = Modifier.width(48.dp))
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -116,7 +111,8 @@ fun EntregasListView(
                                 EntregaCard(
                                     entrega = entrega,
                                     onVerDetalhes = {
-                                        // TODO: navegar para EntregaDetailView se quiseres
+                                        showDialog = true
+                                        viewModel.carregarItensEntrega(entrega.id)
                                     }
                                 )
                             }
@@ -126,6 +122,65 @@ fun EntregasListView(
 
                 ResultState.Idle -> {}
             }
+        }
+
+        // --------- POPUP DE DETALHES ----------
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showDialog = false
+                    viewModel.limparDetalhes()
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDialog = false
+                            viewModel.limparDetalhes()
+                        }
+                    ) {
+                        Text("Fechar")
+                    }
+                },
+                title = {
+                    Text(text = "Itens da entrega")
+                },
+                text = {
+                    when (detalhesState) {
+                        is ResultState.Loading -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        is ResultState.Error -> {
+                            Text(
+                                text = (detalhesState as ResultState.Error).message,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        is ResultState.Success -> {
+                            val itens = (detalhesState as ResultState.Success<List<String>>).data
+                            if (itens.isEmpty()) {
+                                Text("Nenhum item associado a esta entrega.")
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    itens.forEach { linha ->
+                                        Text("• $linha")
+                                    }
+                                }
+                            }
+                        }
+
+                        ResultState.Idle -> {
+                            Text("Carregue em 'Ver Detalhes' para ver os itens.")
+                        }
+                    }
+                }
+            )
         }
     }
 }
@@ -146,7 +201,6 @@ private fun EntregaCard(
                 .padding(16.dp)
         ) {
 
-            // Linha título + chip de estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -170,29 +224,6 @@ private fun EntregaCard(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
-
-            // Itens só quando existir lista
-            if (entrega.itens.isNotEmpty()) {
-                entrega.itens.forEach { linha ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    ) {
-                        // ícone simples tipo “•”
-                        Text(
-                            text = "•",
-                            modifier = Modifier.padding(end = 6.dp),
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = linha,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             Divider(color = Color(0xFFE0E0E0))
 
@@ -219,10 +250,20 @@ private fun EntregaCard(
 @Composable
 private fun EstadoEntregaChip(estado: EstadoEntrega) {
     val (texto, bg, fg) = when (estado) {
-        EstadoEntrega.PRONTA -> Triple("Pronta", ChipBlue, ChipBlueText)
-        EstadoEntrega.PENDENTE -> Triple("Pendente", ChipYellow, ChipYellowText)
-        EstadoEntrega.ENTREGUE -> Triple("Entregue", ChipGreen, ChipGreenText)
-        else -> Triple(estado.name, Color.LightGray, Color.DarkGray)
+        EstadoEntrega.PENDENTE ->
+            Triple("Pendente", ChipYellow, ChipYellowText)
+
+        EstadoEntrega.PRONTA ->
+            Triple("Pronta", ChipBlue, ChipBlueText)
+
+        EstadoEntrega.ENTREGUE ->
+            Triple("Entregue", ChipGreen, ChipGreenText)
+
+        EstadoEntrega.CANCELADA ->
+            Triple("Cancelada", ChipRed, ChipRedText)
+
+        else ->
+            Triple(estado.name, Color.LightGray, Color.DarkGray)
     }
 
     Box(
