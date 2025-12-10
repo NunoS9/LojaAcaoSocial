@@ -13,7 +13,6 @@ import com.ipca.sassolidaria.data.model.Beneficiario
 import com.ipca.sassolidaria.data.model.Entrega
 import com.ipca.sassolidaria.data.model.ItemEntrega
 import com.ipca.sassolidaria.data.model.Produto
-import com.ipca.sassolidaria.data.model.enums.EstadoAgendamento
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
@@ -23,9 +22,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 data class EntregaUi(
-    val id: String,
+    val id: String,                 // id_entrega (ou id do doc)
     val estado: EstadoEntrega,
-    val dataHora: String
+    val dataHora: String            // data do agendamento formatada
 )
 
 class EntregasListViewModel(
@@ -36,7 +35,7 @@ class EntregasListViewModel(
     var entregasState: ResultState<List<EntregaUi>> by mutableStateOf(ResultState.Loading)
         private set
 
-    // estado para o popup de detalhes (lista de itens da entrega)
+    // estado para o popup de detalhes (lista de itens dessa entrega)
     var detalhesState: ResultState<List<String>> by mutableStateOf(ResultState.Idle)
         private set
 
@@ -59,7 +58,7 @@ class EntregasListViewModel(
 
         viewModelScope.launch {
             try {
-                // 1) Buscar o beneficiário deste utilizador
+                // 1) Buscar o beneficiário ligado a este utilizador
                 val benefSnap = db.collection(FirestoreCollections.BENEFICIARIOS)
                     .whereEqualTo("id_utilizador", uid)
                     .limit(1)
@@ -76,8 +75,8 @@ class EntregasListViewModel(
                 val beneficiarioId =
                     benef?.id_beneficiario.takeUnless { it.isNullOrBlank() } ?: benefDoc.id
 
-                // 2) Listener em tempo real dos agendamentos desse beneficiário
-                startAgendamentosListener(beneficiarioId)
+                // 2) Listener em tempo real das ENTREGAS desse beneficiário
+                startEntregasListener(beneficiarioId)
 
             } catch (e: Exception) {
                 entregasState = ResultState.Error(
@@ -87,79 +86,99 @@ class EntregasListViewModel(
         }
     }
 
-    private fun startAgendamentosListener(beneficiarioId: String) {
+    private fun startEntregasListener(beneficiarioId: String) {
         listenerRegistration?.remove()
 
-        listenerRegistration = db.collection(FirestoreCollections.AGENDAMENTOS)
+        listenerRegistration = db.collection(FirestoreCollections.ENTREGAS)
             .whereEqualTo("id_beneficiario", beneficiarioId)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
-                    entregasState = ResultState.Error("Erro ao ouvir agendamentos: ${e.message}")
+                    entregasState = ResultState.Error("Erro ao ouvir entregas: ${e.message}")
                     return@addSnapshotListener
                 }
 
                 if (snapshot == null) {
-                    entregasState = ResultState.Error("Erro ao carregar agendamentos.")
+                    entregasState = ResultState.Error("Erro ao carregar entregas.")
                     return@addSnapshotListener
                 }
 
-                val uiList = snapshot.documents.mapNotNull { doc ->
-                    val agendamento = doc.toObject(Agendamento::class.java) ?: return@mapNotNull null
-                    val idAgendamento = agendamento.id_agendamento.ifBlank { doc.id }
+                viewModelScope.launch {
+                    try {
+                        val uiList = snapshot.documents.mapNotNull { doc ->
+                            val entrega = doc.toObject(Entrega::class.java) ?: return@mapNotNull null
+                            val idEntrega = entrega.id_entrega.ifBlank { doc.id }
 
-                    // 🔁 Conversão EstadoAgendamento -> EstadoEntrega
-                    val estadoEntrega = when (agendamento.estado) {
-                        EstadoAgendamento.PENDENTE -> EstadoEntrega.PENDENTE
-                        EstadoAgendamento.ACEITE   -> EstadoEntrega.PRONTA
-                        EstadoAgendamento.RECUSADO -> EstadoEntrega.CANCELADA
-                        else -> EstadoEntrega.PENDENTE
+                            // buscar data do agendamento (se existir)
+                            val dataHora = if (entrega.id_agendamento.isNotBlank()) {
+                                val agSnap = db.collection(FirestoreCollections.AGENDAMENTOS)
+                                    .document(entrega.id_agendamento)
+                                    .get()
+                                    .await()
+
+                                val agendamento = agSnap.toObject(Agendamento::class.java)
+                                agendamento?.data_agendada?.let { dateTimeFormat.format(it) } ?: ""
+                            } else {
+                                ""
+                            }
+
+                            EntregaUi(
+                                id = idEntrega,
+                                estado = entrega.estado,
+                                dataHora = dataHora
+                            )
+                        }
+
+                        entregasState = ResultState.Success(uiList)
+                    } catch (ex: Exception) {
+                        entregasState = ResultState.Error(
+                            ex.message ?: "Erro ao processar entregas."
+                        )
                     }
-
-                    EntregaUi(
-                        id = idAgendamento,
-                        estado = estadoEntrega,
-                        dataHora = agendamento.data_agendada?.let { dateTimeFormat.format(it) } ?: ""
-                    )
                 }
-
-                entregasState = ResultState.Success(uiList)
             }
     }
 
-    // ---------- DETALHES: ITENS DA ENTREGA LIGADA A ESTE AGENDAMENTO ----------
+    // ---------- DETALHES: ITENS DA ENTREGA ----------
 
-    fun carregarItensEntrega(agendamentoId: String) {
+    fun carregarItensEntrega(entregaId: String) {
         detalhesState = ResultState.Loading
 
         viewModelScope.launch {
             try {
-                // 1) Buscar a entrega ligada a este agendamento
-                val entregaSnap = db.collection(FirestoreCollections.ENTREGAS)
-                    .whereEqualTo("id_agendamento", agendamentoId)
-                    .limit(1)
+                // 1) tentar apanhar o doc de entrega pelo id passado
+                val entregaDocDirect = db.collection(FirestoreCollections.ENTREGAS)
+                    .document(entregaId)
                     .get()
                     .await()
 
-                val entregaDoc = entregaSnap.documents.firstOrNull()
+                val entregaDoc = if (entregaDocDirect.exists()) {
+                    entregaDocDirect
+                } else {
+                    // se entregaId não for o docId, pode ser o campo id_entrega
+                    val snap = db.collection(FirestoreCollections.ENTREGAS)
+                        .whereEqualTo("id_entrega", entregaId)
+                        .limit(1)
+                        .get()
+                        .await()
+                    snap.documents.firstOrNull()
+                }
+
                 if (entregaDoc == null) {
-                    detalhesState = ResultState.Error("Ainda não existem itens para esta entrega.")
+                    detalhesState = ResultState.Error("Entrega não encontrada.")
                     return@launch
                 }
 
                 val entrega = entregaDoc.toObject(Entrega::class.java)
 
-                // possíveis ids que podem estar gravados em itens_entrega
-                val possibleIds = mutableListOf<String>()
-
+                val possibleEntregaIds = mutableListOf<String>()
+                possibleEntregaIds.add(entregaDoc.id)
                 entrega?.id_entrega
                     ?.takeIf { it.isNotBlank() }
-                    ?.let { possibleIds.add(it) }
+                    ?.let { possibleEntregaIds.add(it) }
 
-                possibleIds.add(entregaDoc.id)
-
-                // 2) Buscar itens_entrega usando whereIn
+                // 2) buscar itens_entrega que apontam para esta entrega
                 val itensSnap = db.collection(FirestoreCollections.ITENS_ENTREGA)
-                    .whereIn("id_entrega", possibleIds.distinct())
+                    .whereIn("id_entrega", possibleEntregaIds.distinct())
                     .get()
                     .await()
 
@@ -173,7 +192,6 @@ class EntregasListViewModel(
                 for (itemDoc in itensSnap.documents) {
                     val item = itemDoc.toObject(ItemEntrega::class.java) ?: continue
 
-                    // 3) Buscar produto para obter o nome
                     val prodSnap = db.collection(FirestoreCollections.PRODUTOS)
                         .document(item.id_produto)
                         .get()
