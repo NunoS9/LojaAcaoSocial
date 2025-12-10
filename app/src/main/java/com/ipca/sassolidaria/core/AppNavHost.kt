@@ -32,6 +32,7 @@ import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacoesListView
 import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacaoCreateView
 import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacaoDetailView
 import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiariosListView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiarioDetailView
 
 import com.ipca.sassolidaria.ui.beneficiario.HomeBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
@@ -52,7 +53,7 @@ fun AppNavHost() {
 
     val navController = rememberNavController()
 
-    // 🔥 função interna para garantir que userType é sempre definido
+    //  função interna para garantir que userType é sempre definido
     fun setUser(type: String) {
         navController.currentBackStackEntry
             ?.savedStateHandle
@@ -166,6 +167,16 @@ fun AppNavHost() {
                     modifier = Modifier.padding(padding)
                 )
             }
+        }
+        composable(
+            route = Routes.BENEFICIARIO_DETAIL + "/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) { entry ->
+            setUser("COLABORADOR")
+            BeneficiarioDetailView(
+                navController = navController,
+                id = entry.arguments?.getString("id") ?: ""
+            )
         }
 
         /* ------------------------- BENEFICIÁRIO ------------------------- */
