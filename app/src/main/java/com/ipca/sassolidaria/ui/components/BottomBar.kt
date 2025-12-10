@@ -1,5 +1,5 @@
 package com.ipca.sassolidaria.ui.components
-
+import com.ipca.sassolidaria.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +22,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.core.UserType
+import androidx.compose.ui.res.vectorResource
+
 
 private val ActiveGreen = Color(0xFF004B3C)
 private val InactiveGray = Color(0xFF9E9E9E)
@@ -50,6 +52,7 @@ fun BottomBar(navController: NavController) {
             BottomNavItem("Início", Routes.HOME_COLABORADOR, Icons.Filled.Home, Icons.Outlined.Home),
             BottomNavItem("Produtos", Routes.PRODUTOS_LIST, Icons.Filled.Inventory, Icons.Outlined.Inventory),
             BottomNavItem("Doações", Routes.DOACOES_LIST, Icons.Filled.VolunteerActivism, Icons.Outlined.VolunteerActivism),
+            BottomNavItem("Beneficiarios", Routes.BENEFICIARIOS_LIST, ImageVector.vectorResource(R.drawable.ic_beneficiarios), ImageVector.vectorResource(R.drawable.ic_beneficiarios)),
             BottomNavItem("Candidaturas", Routes.CANDIDATURAS_LIST, Icons.Filled.List, Icons.Outlined.List),
             BottomNavItem("Perfil", Routes.PERFIL_COLABORADOR, Icons.Filled.Person, Icons.Outlined.Person),
         )

@@ -19,8 +19,6 @@ import com.ipca.sassolidaria.ui.components.BottomBar
 
 import com.ipca.sassolidaria.auth.LoginView
 import com.ipca.sassolidaria.auth.RegisterView
-import com.ipca.sassolidaria.auth.RecoverPasswordView
-
 import com.ipca.sassolidaria.ui.screens.SplashView
 
 import com.ipca.sassolidaria.ui.colaborador.HomeColaboradorView
@@ -33,6 +31,7 @@ import com.ipca.sassolidaria.ui.colaborador.produtos.ProdutoEditView
 import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacoesListView
 import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacaoCreateView
 import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacaoDetailView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiariosListView
 
 import com.ipca.sassolidaria.ui.beneficiario.HomeBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
@@ -42,18 +41,23 @@ import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoDetailsView
 import com.ipca.sassolidaria.ui.beneficiario.marcacoes.MarcacoesBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.entregas.EntregasListView
 
-
 import com.ipca.sassolidaria.ui.utilizador.HomeUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.perfil.PerfilUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.NotificacoesUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
 
-
 @Composable
 fun AppNavHost() {
 
     val navController = rememberNavController()
+
+    // 🔥 função interna para garantir que userType é sempre definido
+    fun setUser(type: String) {
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set("userType", type)
+    }
 
     NavHost(
         navController = navController,
@@ -73,24 +77,32 @@ fun AppNavHost() {
         /* ------------------------- AUTENTICAÇÃO ------------------------- */
         composable(Routes.LOGIN) { LoginView(navController) }
         composable(Routes.REGISTER) { RegisterView(navController) }
-        composable(Routes.RECOVER_PASSWORD) {
-            RecoverPasswordView(onBack = { navController.popBackStack() })
-        }
+        composable(Routes.RECOVER_PASSWORD) { }
 
-        /* ------------------------- HOME COLABORADOR ------------------------- */
+        /* ------------------------- COLABORADOR ------------------------- */
+
         composable(Routes.HOME_COLABORADOR) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("userType", "COLABORADOR")
+            setUser("COLABORADOR")
             HomeColaboradorView(navController)
         }
 
-        /* ------------------------- PRODUTOS ------------------------- */
-        composable(Routes.PRODUTOS_LIST) { ProdutosListView(navController) }
-        composable(Routes.PRODUTO_CREATE) { ProdutoCreateView(navController) }
-        composable(Routes.PRODUTO_EDIT) { ProdutoEditView(navController) }
+        composable(Routes.PRODUTOS_LIST) {
+            setUser("COLABORADOR")
+            ProdutosListView(navController)
+        }
 
-        /* ------------------------- PERFIL COLABORADOR ------------------------- */
+        composable(Routes.PRODUTO_CREATE) {
+            setUser("COLABORADOR")
+            ProdutoCreateView(navController)
+        }
+
+        composable(Routes.PRODUTO_EDIT) {
+            setUser("COLABORADOR")
+            ProdutoEditView(navController)
+        }
+
         composable(Routes.PERFIL_COLABORADOR) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("userType", "COLABORADOR")
+            setUser("COLABORADOR")
             PerfilColaboradorView(
                 viewModel = viewModel(),
                 onLogoutConfirmed = {
@@ -100,10 +112,8 @@ fun AppNavHost() {
             )
         }
 
-        /* ------------------------- DOAÇÕES ------------------------- */
         composable(Routes.DOACOES_LIST) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("userType", "COLABORADOR")
-
+            setUser("COLABORADOR")
             Scaffold(
                 bottomBar = { BottomBar(navController) }
             ) { padding ->
@@ -114,41 +124,59 @@ fun AppNavHost() {
             }
         }
 
-        composable(Routes.DOACAO_CREATE) { DoacaoCreateView(navController) }
+        composable(Routes.DOACAO_CREATE) {
+            setUser("COLABORADOR")
+            DoacaoCreateView(navController)
+        }
 
         composable(
-            route = Routes.DOACAO_DETAIL + "/{id}",
+            Routes.DOACAO_DETAIL + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { entry ->
+            setUser("COLABORADOR")
             DoacaoDetailView(
                 navController = navController,
                 id = entry.arguments?.getString("id") ?: ""
             )
         }
 
-        /* ------------------------- CANDIDATURAS (COLABORADOR) ------------------------- */
         composable(Routes.CANDIDATURAS_LIST) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("userType", "COLABORADOR")
+            setUser("COLABORADOR")
             CandidaturasListView(navController)
         }
 
         composable(
-            route = Routes.CANDIDATURA_DETAIL_COLABORADOR + "/{id}",
+            Routes.CANDIDATURA_DETAIL_COLABORADOR + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { entry ->
+            setUser("COLABORADOR")
             CandidaturaDetailView(
                 navController = navController,
                 candidaturaId = entry.arguments?.getString("id") ?: ""
             )
         }
 
+        composable(Routes.BENEFICIARIOS_LIST) {
+            setUser("COLABORADOR")
+            Scaffold(
+                bottomBar = { BottomBar(navController) }
+            ) { padding ->
+                BeneficiariosListView(
+                    navController = navController,
+                    modifier = Modifier.padding(padding)
+                )
+            }
+        }
+
         /* ------------------------- BENEFICIÁRIO ------------------------- */
+
         composable(Routes.HOME_BENEFICIARIO) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("userType", "BENEFICIARIO")
+            setUser("BENEFICIARIO")
             HomeBeneficiarioView(navController)
         }
 
         composable(Routes.PERFIL_BENEFICIARIO) {
+            setUser("BENEFICIARIO")
             PerfilBeneficiarioView(
                 onLogoutConfirmed = {
                     navController.navigate(Routes.LOGIN) { popUpTo(0) }
@@ -157,34 +185,60 @@ fun AppNavHost() {
             )
         }
 
-        composable(Routes.PEDIDOS_LIST) { PedidosListView(navController) }
-        composable(Routes.PEDIDOS_CREATE) { PedidoCreateView(navController) }
+        composable(Routes.PEDIDOS_LIST) {
+            setUser("BENEFICIARIO")
+            PedidosListView(navController)
+        }
+
+        composable(Routes.PEDIDOS_CREATE) {
+            setUser("BENEFICIARIO")
+            PedidoCreateView(navController)
+        }
 
         composable(
-            route = Routes.PEDIDO_DETAILS_BENEFICIARIO + "/{pedidoId}",
+            Routes.PEDIDO_DETAILS_BENEFICIARIO + "/{pedidoId}",
             arguments = listOf(navArgument("pedidoId") { type = NavType.StringType })
         ) { entry ->
+            setUser("BENEFICIARIO")
             PedidoDetailsView(navController, entry.arguments?.getString("pedidoId") ?: "")
         }
 
         composable(Routes.MARCACOES_LIST) {
-            MarcacoesBeneficiarioView(navController = navController)
+            setUser("BENEFICIARIO")
+            MarcacoesBeneficiarioView(navController)
         }
 
         composable(Routes.ENTREGAS_LIST) {
-            EntregasListView(navController = navController)
+            setUser("BENEFICIARIO")
+            EntregasListView(navController)
         }
 
-        /* ------------------------- HOME UTILIZADOR ------------------------- */
+        /* ------------------------- UTILIZADOR ------------------------- */
+
         composable(Routes.HOME_UTILIZADOR) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("userType", "UTILIZADOR")
+            setUser("UTILIZADOR")
             HomeUtilizadorView(navController)
         }
 
-        composable(Routes.PERFIL_UTILIZADOR) { PerfilUtilizadorView(navController) }
-        composable(Routes.CANDIDATURA_UTILIZADOR) { CandidaturasUtilizadorView(navController) }
-        composable(Routes.CANDIDATURA_CREATE) { CandidaturaCreateView(navController) }
-        composable(Routes.NOTIFICACOES_UTILIZADOR) { NotificacoesUtilizadorView(navController) }
+        composable(Routes.PERFIL_UTILIZADOR) {
+            setUser("UTILIZADOR")
+            PerfilUtilizadorView(navController)
+        }
+
+        composable(Routes.CANDIDATURA_UTILIZADOR) {
+            setUser("UTILIZADOR")
+            CandidaturasUtilizadorView(navController)
+        }
+
+        composable(Routes.CANDIDATURA_CREATE) {
+            setUser("UTILIZADOR")
+            CandidaturaCreateView(navController)
+        }
+
+        composable(Routes.NOTIFICACOES_UTILIZADOR) {
+            setUser("UTILIZADOR")
+            NotificacoesUtilizadorView(navController)
+        }
     }
 }
 

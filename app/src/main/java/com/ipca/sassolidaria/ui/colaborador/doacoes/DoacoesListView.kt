@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,14 +42,15 @@ fun DoacoesListView(
             .padding(16.dp)
     ) {
 
-        /* ---------- TOP BAR ---------- */
+        /* ---------- TOP BAR (SEM VOLTAR ATRÁS) ---------- */
         Row(
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null)
-            }
+            // Espaço para alinhar título ao centro
+            Spacer(modifier = Modifier.width(48.dp))
 
             Box(
                 modifier = Modifier.weight(1f),
@@ -62,7 +62,11 @@ fun DoacoesListView(
             IconButton(onClick = {
                 navController.navigate(Routes.DOACAO_CREATE)
             }) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF0B5D47))
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    tint = Color(0xFF0B5D47)
+                )
             }
         }
 

@@ -153,14 +153,6 @@ fun LoginView(
 
             Spacer(Modifier.height(20.dp))
 
-            Text(
-                "Esqueceu a palavra-passe?",
-                color = greenPrimary,
-                modifier = Modifier.clickable {
-                    navController?.navigate(Routes.RECOVER_PASSWORD)
-                }
-            )
-
             Spacer(Modifier.height(8.dp))
 
             Text(

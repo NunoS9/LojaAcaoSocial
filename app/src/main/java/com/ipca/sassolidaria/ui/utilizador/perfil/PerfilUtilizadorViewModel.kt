@@ -1,12 +1,10 @@
 package com.ipca.sassolidaria.ui.utilizador.perfil
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class PerfilUtilizadorViewModel(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
@@ -16,69 +14,57 @@ class PerfilUtilizadorViewModel(
     private val _uiState = MutableStateFlow(PerfilUtilizadorState())
     val uiState: StateFlow<PerfilUtilizadorState> = _uiState
 
-    init {
-        loadUser()
-    }
+    init { loadUser() }
 
     private fun loadUser() {
         val uid = auth.currentUser?.uid ?: return
         firestore.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
-                _uiState.value = _uiState.value.copy(
+                _uiState.value = PerfilUtilizadorState(
                     nome = doc.getString("nome") ?: "",
                     email = doc.getString("email") ?: ""
                 )
             }
     }
 
-    fun editUserData(
+    fun updateName(
         newName: String,
-        newEmail: String,
         onSuccess: () -> Unit,
-        onError: () -> Unit
+        onError: (String) -> Unit
     ) {
-        if (newName.isBlank() || newEmail.isBlank()) {
-            onError()
+        val uid = auth.currentUser?.uid ?: return
+
+        if (newName.isBlank()) {
+            onError("O nome não pode estar vazio.")
             return
         }
 
-        val uid = auth.currentUser!!.uid
-
-        viewModelScope.launch {
-            try {
-                auth.currentUser!!.updateEmail(newEmail)
-                    .addOnSuccessListener {
-                        firestore.collection("users").document(uid)
-                            .update(mapOf("nome" to newName, "email" to newEmail))
-                            .addOnSuccessListener {
-                                _uiState.value = _uiState.value.copy(
-                                    nome = newName,
-                                    email = newEmail
-                                )
-                                onSuccess()
-                            }
-                            .addOnFailureListener { onError() }
-                    }
-                    .addOnFailureListener { onError() }
-            } catch (e: Exception) {
-                onError()
+        firestore.collection("users")
+            .document(uid)
+            .update("nome", newName)
+            .addOnSuccessListener {
+                _uiState.value = _uiState.value.copy(nome = newName)
+                onSuccess()
             }
-        }
+            .addOnFailureListener {
+                onError("Erro ao atualizar nome.")
+            }
     }
 
     fun updatePassword(
         newPassword: String,
         onSuccess: () -> Unit,
-        onError: () -> Unit
+        onError: (String) -> Unit
     ) {
         if (newPassword.isBlank()) {
-            onError()
+            onError("A nova password não pode estar vazia.")
             return
         }
 
-        auth.currentUser!!.updatePassword(newPassword)
+        auth.currentUser!!
+            .updatePassword(newPassword)
             .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onError() }
+            .addOnFailureListener { onError("Erro ao alterar password") }
     }
 }
 

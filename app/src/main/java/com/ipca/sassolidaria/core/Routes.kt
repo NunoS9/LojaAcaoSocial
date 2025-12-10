@@ -17,14 +17,15 @@ object Routes {
     const val PRODUTO_CREATE = "produto_create"
     const val PRODUTO_EDIT = "produto_edit/{id}"
     const val DOACOES_LIST = "doacoes_list"
-
     const val CANDIDATURAS_LIST = "candidaturas_list"
     const val PERFIL_COLABORADOR = "perfil_colaborador"
     const val DOACAO_CREATE = "doacao_create"
     const val DOACAO_DETAIL = "doacao_detail"
+    const val BENEFICIARIOS_LIST = "beneficiarios_list"
 
     // Beneficiário
     const val PEDIDOS_LIST = "pedidos_list"
+    const val BENEFICIARIO_DETAIL = "beneficiario_detail"
 
     const val PEDIDOS_CREATE="pedidos_create"
     const val ENTREGAS_LIST = "entregas_list"
