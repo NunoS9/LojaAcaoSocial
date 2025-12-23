@@ -22,6 +22,12 @@ object Routes {
     const val DOACAO_CREATE = "doacao_create"
     const val DOACAO_DETAIL = "doacao_detail"
     const val BENEFICIARIOS_LIST = "beneficiarios_list"
+    const val BENEFICIARIO_PEDIDOS = "beneficiario_pedidos/{idBeneficiario}"
+    const val BENEFICIARIO_APOIOS  = "beneficiario_apoios/{idBeneficiario}"
+    const val AGENDAMENTO_MARCAR = "agendamento_marcar/{idBeneficiario}/{tipo}/{ref}"
+    const val BENEFICIARIO_AGENDAMENTOS = "beneficiario/{idBeneficiario}/agendamentos"
+    const val BENEFICIARIO_ENTREGAS = "beneficiario_entregas/{idBeneficiario}"
+    const val ENTREGA_PROCESSAR = "entrega_processar/{idEntrega}/{idBeneficiario}"
 
 
     // Beneficiário

@@ -39,10 +39,26 @@ class PedidoCreateViewModel(
 
         viewModelScope.launch {
             try {
+                // ✅ 1) descobrir o ID do beneficiário (doc da coleção BENEFICIARIOS) através do id_utilizador = uid
+                val benefSnapshot = db.collection(FirestoreCollections.BENEFICIARIOS)
+                    .whereEqualTo("id_utilizador", uid)
+                    .limit(1)
+                    .get()
+                    .await()
+
+                val benefDoc = benefSnapshot.documents.firstOrNull()
+                if (benefDoc == null) {
+                    submitState = ResultState.Error("Este utilizador ainda não tem perfil de beneficiário.")
+                    return@launch
+                }
+
+                // ✅ usar campo id_beneficiario se existir, senão usar o id do documento
+                val idBeneficiario = benefDoc.getString("id_beneficiario") ?: benefDoc.id
+
                 // Cria o objeto Pedido
                 val pedido = Pedido(
-                    id_pedido = "",              // deixamos vazio, vamos usar o id do doc
-                    id_beneficiario = uid,       // 👈 aqui assumo que o id_beneficiario = uid
+                    id_pedido = "",                 // deixamos vazio, vamos usar o id do doc
+                    id_beneficiario = idBeneficiario, // ✅ AGORA guarda o id do beneficiário (e não o uid)
                     id_agendamento = "",
                     data_pedido = Date(),
                     descricao = descricao,

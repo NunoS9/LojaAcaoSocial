@@ -5,18 +5,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.data.model.Beneficiario
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,15 +53,48 @@ fun BeneficiarioDetailView(
             if (beneficiario == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {
-                BeneficiarioDetailContent(beneficiario!!)
+                BeneficiarioDetailContent(
+                    beneficiario = beneficiario!!,
+                    onVerPedidos = {
+                        navController.navigate(
+                            Routes.BENEFICIARIO_PEDIDOS.replace("{idBeneficiario}", beneficiario!!.id_beneficiario)
+                        )
+                    },
+                    onVerApoios = {
+                        navController.navigate(
+                            Routes.BENEFICIARIO_APOIOS.replace("{idBeneficiario}", beneficiario!!.id_beneficiario)
+                        )
+                    },
+                    onVerAgendamentos = {
+                        navController.navigate(
+                            Routes.BENEFICIARIO_AGENDAMENTOS.replace(
+                                "{idBeneficiario}",
+                                beneficiario!!.id_beneficiario
+                            )
+                        )
+                    },
+                    onVerEntregas = {
+                        navController.navigate(
+                            Routes.BENEFICIARIO_ENTREGAS.replace(
+                                "{idBeneficiario}",
+                                beneficiario!!.id_beneficiario
+                            )
+                        )
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun BeneficiarioDetailContent(beneficiario: Beneficiario) {
-
+private fun BeneficiarioDetailContent(
+    beneficiario: Beneficiario,
+    onVerPedidos: () -> Unit,
+    onVerApoios: () -> Unit,
+    onVerAgendamentos: () -> Unit,
+    onVerEntregas: () -> Unit
+) {
     val green = Color(0xFF0B3D2E)
     val radius = 12.dp
 
@@ -71,14 +105,12 @@ private fun BeneficiarioDetailContent(beneficiario: Beneficiario) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        // CARD SUPERIOR
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(radius),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(1.dp)
         ) {
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,8 +145,6 @@ private fun BeneficiarioDetailContent(beneficiario: Beneficiario) {
             }
         }
 
-
-        // CARD DE INFORMAÇÕES
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(radius),
@@ -125,63 +155,41 @@ private fun BeneficiarioDetailContent(beneficiario: Beneficiario) {
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 Text("Informações", style = MaterialTheme.typography.titleMedium)
 
-                InfoRow(Icons.Default.Email, beneficiario.email)
-                InfoRow(Icons.Default.Phone, beneficiario.contacto)
-                InfoRow(Icons.Default.Badge, "Nº Estudante: ${beneficiario.numero_estudante}")
-                InfoRow(Icons.Default.School, "${beneficiario.curso} (${beneficiario.grau_curso})")
+                Text("Email: ${beneficiario.email}", color = Color(0xFF555555))
+                Text("Contacto: ${beneficiario.contacto}", color = Color(0xFF555555))
+                Text("Nº Estudante: ${beneficiario.numero_estudante}", color = Color(0xFF555555))
+                Text("${beneficiario.curso} (${beneficiario.grau_curso})", color = Color(0xFF555555))
             }
         }
 
+        Button(
+            onClick = onVerPedidos,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = green),
+            shape = RoundedCornerShape(radius)
+        ) { Text("Ver Pedidos", color = Color.White) }
 
-        // BOTÕES RETANGULARES (dp = 12)
-        listOf(
-            "Ver Pedidos",
-            "Ver Apoio",
-            "Agendamentos",
-            "Entregas"
-        ).forEach { label ->
-            Button(
-                onClick = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = green),
-                shape = RoundedCornerShape(radius)
-            ) {
-                Text(label, color = Color.White)
-            }
-        }
+        Button(
+            onClick = onVerApoios,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = green),
+            shape = RoundedCornerShape(radius)
+        ) { Text("Ver Apoio", color = Color.White) }
+
+        Button(
+            onClick = onVerAgendamentos,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = green),
+            shape = RoundedCornerShape(radius)
+        ) { Text("Agendamentos", color = Color.White) }
+
+        Button(
+            onClick = onVerEntregas,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = green),
+            shape = RoundedCornerShape(radius)
+        ) { Text("Entregas", color = Color.White) }
     }
-}
-
-@Composable
-private fun InfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color(0xFF555555),
-            modifier = Modifier.size(18.dp)
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        Text(text, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun BeneficiarioDetailPreview() {
-    BeneficiarioDetailContent(
-        beneficiario = Beneficiario()
-    )
 }

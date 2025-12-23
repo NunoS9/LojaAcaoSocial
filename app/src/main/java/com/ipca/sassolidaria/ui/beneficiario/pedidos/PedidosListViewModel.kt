@@ -1,4 +1,5 @@
 package com.ipca.sassolidaria.ui.beneficiario.pedidos
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -48,31 +49,51 @@ class PedidosListViewModel(
         // Remove listener antigo se existir
         listenerRegistration?.remove()
 
-        listenerRegistration = db.collection(FirestoreCollections.PEDIDOS)
-            .whereEqualTo("id_beneficiario", uid)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    pedidosState = ResultState.Error("Erro ao ouvir pedidos: ${e.message}")
-                    return@addSnapshotListener
+        // 1) descobrir o id do beneficiário a partir do uid (id_utilizador)
+        db.collection(FirestoreCollections.BENEFICIARIOS)
+            .whereEqualTo("id_utilizador", uid)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { benefSnapshot ->
+
+                val benefDoc = benefSnapshot.documents.firstOrNull()
+                if (benefDoc == null) {
+                    pedidosState = ResultState.Success(emptyList())
+                    return@addOnSuccessListener
                 }
 
-                if (snapshot == null) {
-                    pedidosState = ResultState.Error("Erro ao carregar pedidos.")
-                    return@addSnapshotListener
-                }
+                val idBeneficiario = benefDoc.getString("id_beneficiario") ?: benefDoc.id
 
-                val pedidos = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(Pedido::class.java)?.let { pedido ->
-                        PedidoUi(
-                            id = pedido.id_pedido.ifBlank { doc.id },
-                            data = pedido.data_pedido?.let { dateFormat.format(it) } ?: "",
-                            estado = pedido.estado,
-                            descricao = pedido.descricao
-                        )
+                // 2) agora sim: ouvir pedidos do beneficiário (em realtime)
+                listenerRegistration = db.collection(FirestoreCollections.PEDIDOS)
+                    .whereEqualTo("id_beneficiario", idBeneficiario)
+                    .addSnapshotListener { snapshot, e ->
+                        if (e != null) {
+                            pedidosState = ResultState.Error("Erro ao ouvir pedidos: ${e.message}")
+                            return@addSnapshotListener
+                        }
+
+                        if (snapshot == null) {
+                            pedidosState = ResultState.Error("Erro ao carregar pedidos.")
+                            return@addSnapshotListener
+                        }
+
+                        val pedidos = snapshot.documents.mapNotNull { doc ->
+                            doc.toObject(Pedido::class.java)?.let { pedido ->
+                                PedidoUi(
+                                    id = pedido.id_pedido.ifBlank { doc.id },
+                                    data = pedido.data_pedido?.let { dateFormat.format(it) } ?: "",
+                                    estado = pedido.estado,
+                                    descricao = pedido.descricao
+                                )
+                            }
+                        }
+
+                        pedidosState = ResultState.Success(pedidos)
                     }
-                }
-
-                pedidosState = ResultState.Success(pedidos)
+            }
+            .addOnFailureListener { e ->
+                pedidosState = ResultState.Error("Erro ao carregar beneficiário: ${e.message}")
             }
     }
 

@@ -33,6 +33,13 @@ import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacaoCreateView
 import com.ipca.sassolidaria.ui.colaborador.doacoes.DoacaoDetailView
 import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiariosListView
 import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiarioDetailView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.PedidosBeneficiarioView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.ApoiosBeneficiarioView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.AgendamentoMarcarView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiarioAgendamentosView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.AgendamentoEditarView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiarioEntregasView
+import com.ipca.sassolidaria.ui.colaborador.beneficiarios.ProcessarEntregaView
 
 import com.ipca.sassolidaria.ui.beneficiario.HomeBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
@@ -176,6 +183,65 @@ fun AppNavHost() {
             BeneficiarioDetailView(
                 navController = navController,
                 id = entry.arguments?.getString("id") ?: ""
+            )
+        }
+
+        composable(Routes.BENEFICIARIO_PEDIDOS) { backStack ->
+            val idBenef = backStack.arguments?.getString("idBeneficiario") ?: ""
+            PedidosBeneficiarioView(navController, idBenef)
+        }
+
+        composable(Routes.BENEFICIARIO_APOIOS) { backStack ->
+            val idBenef = backStack.arguments?.getString("idBeneficiario") ?: ""
+            ApoiosBeneficiarioView(navController, idBenef)
+        }
+
+        composable(Routes.AGENDAMENTO_MARCAR) { backStack ->
+            val idBenef = backStack.arguments?.getString("idBeneficiario") ?: ""
+            val tipo = backStack.arguments?.getString("tipo") ?: "PEDIDO"
+            val ref = backStack.arguments?.getString("ref") ?: ""
+            AgendamentoMarcarView(navController, idBenef, tipo, ref)
+        }
+
+        composable(Routes.BENEFICIARIO_AGENDAMENTOS) { backStackEntry ->
+            val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario") ?: ""
+            BeneficiarioAgendamentosView(
+                navController = navController,
+                idBeneficiario = idBeneficiario
+            )
+        }
+
+        composable("agendamento_editar/{idBeneficiario}/{idAgendamento}") { backStackEntry ->
+            val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario") ?: ""
+            val idAgendamento = backStackEntry.arguments?.getString("idAgendamento") ?: ""
+            AgendamentoEditarView(navController, idBeneficiario, idAgendamento)
+        }
+
+        composable(
+            route = Routes.BENEFICIARIO_ENTREGAS,
+            arguments = listOf(navArgument("idBeneficiario") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario").orEmpty()
+            BeneficiarioEntregasView(
+                navController = navController,
+                idBeneficiario = idBeneficiario
+            )
+        }
+
+        composable(
+            route = Routes.ENTREGA_PROCESSAR,
+            arguments = listOf(
+                navArgument("idEntrega") { type = NavType.StringType },
+                navArgument("idBeneficiario") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val idEntrega = backStackEntry.arguments?.getString("idEntrega").orEmpty()
+            val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario").orEmpty()
+
+            ProcessarEntregaView(
+                navController = navController,
+                idEntrega = idEntrega,
+                idBeneficiario = idBeneficiario
             )
         }
 
