@@ -8,13 +8,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.navArgument
 
+import com.google.firebase.auth.FirebaseAuth
 import com.ipca.sassolidaria.ui.components.BottomBar
 
 import com.ipca.sassolidaria.auth.LoginView
@@ -55,12 +56,16 @@ import com.ipca.sassolidaria.ui.utilizador.NotificacoesUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
 
+//  CHAT
+import com.ipca.sassolidaria.ui.chat.ChatView
+import com.ipca.sassolidaria.ui.chat.ChatListView
+import com.ipca.sassolidaria.ui.chat.components.SuportePerfilItem
+
 @Composable
 fun AppNavHost() {
 
     val navController = rememberNavController()
 
-    //  função interna para garantir que userType é sempre definido
     fun setUser(type: String) {
         navController.currentBackStackEntry
             ?.savedStateHandle
@@ -71,6 +76,7 @@ fun AppNavHost() {
         navController = navController,
         startDestination = Routes.SPLASH
     ) {
+
         /* ------------------------- SPLASH ------------------------- */
         composable(Routes.SPLASH) {
             SplashView(
@@ -113,22 +119,22 @@ fun AppNavHost() {
             setUser("COLABORADOR")
             PerfilColaboradorView(
                 viewModel = viewModel(),
+                bottomBar = { BottomBar(navController) },
                 onLogoutConfirmed = {
                     navController.navigate(Routes.LOGIN) { popUpTo(0) }
                 },
-                bottomBar = { BottomBar(navController) }
+                suporteSlot = {
+                    SuportePerfilItem {
+                        navController.navigate(Routes.CHAT_COLABORADOR_LIST)
+                    }
+                }
             )
         }
 
         composable(Routes.DOACOES_LIST) {
             setUser("COLABORADOR")
-            Scaffold(
-                bottomBar = { BottomBar(navController) }
-            ) { padding ->
-                DoacoesListView(
-                    navController = navController,
-                    modifier = Modifier.padding(padding)
-                )
+            Scaffold(bottomBar = { BottomBar(navController) }) { padding ->
+                DoacoesListView(navController, Modifier.padding(padding))
             }
         }
 
@@ -142,10 +148,7 @@ fun AppNavHost() {
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { entry ->
             setUser("COLABORADOR")
-            DoacaoDetailView(
-                navController = navController,
-                id = entry.arguments?.getString("id") ?: ""
-            )
+            DoacaoDetailView(navController, entry.arguments?.getString("id") ?: "")
         }
 
         composable(Routes.CANDIDATURAS_LIST) {
@@ -158,45 +161,38 @@ fun AppNavHost() {
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { entry ->
             setUser("COLABORADOR")
-            CandidaturaDetailView(
-                navController = navController,
-                candidaturaId = entry.arguments?.getString("id") ?: ""
-            )
+            CandidaturaDetailView(navController, entry.arguments?.getString("id") ?: "")
         }
 
         composable(Routes.BENEFICIARIOS_LIST) {
             setUser("COLABORADOR")
-            Scaffold(
-                bottomBar = { BottomBar(navController) }
-            ) { padding ->
-                BeneficiariosListView(
-                    navController = navController,
-                    modifier = Modifier.padding(padding)
-                )
+            Scaffold(bottomBar = { BottomBar(navController) }) { padding ->
+                BeneficiariosListView(navController, Modifier.padding(padding))
             }
         }
+
         composable(
-            route = Routes.BENEFICIARIO_DETAIL + "/{id}",
+            Routes.BENEFICIARIO_DETAIL + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { entry ->
             setUser("COLABORADOR")
-            BeneficiarioDetailView(
-                navController = navController,
-                id = entry.arguments?.getString("id") ?: ""
-            )
+            BeneficiarioDetailView(navController, entry.arguments?.getString("id") ?: "")
         }
 
         composable(Routes.BENEFICIARIO_PEDIDOS) { backStack ->
+            setUser("COLABORADOR")
             val idBenef = backStack.arguments?.getString("idBeneficiario") ?: ""
             PedidosBeneficiarioView(navController, idBenef)
         }
 
         composable(Routes.BENEFICIARIO_APOIOS) { backStack ->
+            setUser("COLABORADOR")
             val idBenef = backStack.arguments?.getString("idBeneficiario") ?: ""
             ApoiosBeneficiarioView(navController, idBenef)
         }
 
         composable(Routes.AGENDAMENTO_MARCAR) { backStack ->
+            setUser("COLABORADOR")
             val idBenef = backStack.arguments?.getString("idBeneficiario") ?: ""
             val tipo = backStack.arguments?.getString("tipo") ?: "PEDIDO"
             val ref = backStack.arguments?.getString("ref") ?: ""
@@ -204,14 +200,13 @@ fun AppNavHost() {
         }
 
         composable(Routes.BENEFICIARIO_AGENDAMENTOS) { backStackEntry ->
+            setUser("COLABORADOR")
             val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario") ?: ""
-            BeneficiarioAgendamentosView(
-                navController = navController,
-                idBeneficiario = idBeneficiario
-            )
+            BeneficiarioAgendamentosView(navController, idBeneficiario)
         }
 
         composable("agendamento_editar/{idBeneficiario}/{idAgendamento}") { backStackEntry ->
+            setUser("COLABORADOR")
             val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario") ?: ""
             val idAgendamento = backStackEntry.arguments?.getString("idAgendamento") ?: ""
             AgendamentoEditarView(navController, idBeneficiario, idAgendamento)
@@ -221,11 +216,9 @@ fun AppNavHost() {
             route = Routes.BENEFICIARIO_ENTREGAS,
             arguments = listOf(navArgument("idBeneficiario") { type = NavType.StringType })
         ) { backStackEntry ->
+            setUser("COLABORADOR")
             val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario").orEmpty()
-            BeneficiarioEntregasView(
-                navController = navController,
-                idBeneficiario = idBeneficiario
-            )
+            BeneficiarioEntregasView(navController, idBeneficiario)
         }
 
         composable(
@@ -235,14 +228,10 @@ fun AppNavHost() {
                 navArgument("idBeneficiario") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            setUser("COLABORADOR")
             val idEntrega = backStackEntry.arguments?.getString("idEntrega").orEmpty()
             val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario").orEmpty()
-
-            ProcessarEntregaView(
-                navController = navController,
-                idEntrega = idEntrega,
-                idBeneficiario = idBeneficiario
-            )
+            ProcessarEntregaView(navController, idEntrega, idBeneficiario)
         }
 
         /* ------------------------- BENEFICIÁRIO ------------------------- */
@@ -255,10 +244,15 @@ fun AppNavHost() {
         composable(Routes.PERFIL_BENEFICIARIO) {
             setUser("BENEFICIARIO")
             PerfilBeneficiarioView(
+                bottomBar = { BottomBar(navController) },
                 onLogoutConfirmed = {
                     navController.navigate(Routes.LOGIN) { popUpTo(0) }
                 },
-                bottomBar = { BottomBar(navController) }
+                suporteSlot = {
+                    SuportePerfilItem {
+                        navController.navigate(Routes.CHAT_BENEFICIARIO)
+                    }
+                }
             )
         }
 
@@ -290,6 +284,28 @@ fun AppNavHost() {
             EntregasListView(navController)
         }
 
+        /* ------------------------- CHAT ------------------------- */
+
+        composable(Routes.CHAT_BENEFICIARIO) {
+            setUser("BENEFICIARIO")
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@composable
+            ChatView(uid, UserType.BENEFICIARIO, navController)
+        }
+
+        composable(Routes.CHAT_COLABORADOR_LIST) {
+            setUser("COLABORADOR")
+            ChatListView(navController)
+        }
+
+        composable(
+            route = Routes.CHAT_COLABORADOR,
+            arguments = listOf(navArgument("chatId") { type = NavType.StringType })
+        ) { backStack ->
+            setUser("COLABORADOR")
+            val chatId = backStack.arguments?.getString("chatId") ?: return@composable
+            ChatView(chatId, UserType.COLABORADOR, navController)
+        }
+
         /* ------------------------- UTILIZADOR ------------------------- */
 
         composable(Routes.HOME_UTILIZADOR) {
@@ -318,6 +334,7 @@ fun AppNavHost() {
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

@@ -27,7 +27,8 @@ private val LightGrayLine = Color(0xFFE0E0E0)
 fun PerfilColaboradorView(
     viewModel: PerfilColaboradorViewModel = viewModel(),
     onLogoutConfirmed: () -> Unit = {},
-    bottomBar: @Composable () -> Unit = {}
+    bottomBar: @Composable () -> Unit = {},
+    suporteSlot: @Composable () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -86,8 +87,13 @@ fun PerfilColaboradorView(
             )
 
             Divider(color = LightGrayLine)
+            /* ---------- SUPORTE ---------- */
+            suporteSlot()
+
+            Divider(color = LightGrayLine)
 
             Spacer(Modifier.weight(1f))
+
 
             Button(
                 onClick = { showLogoutDialog = true },

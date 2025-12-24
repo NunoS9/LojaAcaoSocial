@@ -32,7 +32,8 @@ private val GreyInput = Color(0xFFEDEDED)
 fun PerfilBeneficiarioView(
     viewModel: PerfilBeneficiarioViewModel = viewModel(),
     onLogoutConfirmed: () -> Unit = {},
-    bottomBar: @Composable () -> Unit = {}
+    bottomBar: @Composable () -> Unit = {},
+    suporteSlot: @Composable () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -99,6 +100,11 @@ fun PerfilBeneficiarioView(
                 text = "Preferências de Agendamento",
                 onClick = { showPreferenciasDialog = true }
             )
+
+            Divider(color = LightGrayLine)
+
+            /* ---------- SUPORTE ---------- */
+            suporteSlot()
 
             Divider(color = LightGrayLine)
 

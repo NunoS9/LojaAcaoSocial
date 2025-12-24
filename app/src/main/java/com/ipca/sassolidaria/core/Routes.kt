@@ -48,4 +48,9 @@ object Routes {
     const val CANDIDATURA_UTILIZADOR = "candidatura_utilizador"
     const val CANDIDATURA_CREATE = "candidatura_create"
     const val CANDIDATURA_DETAIL_COLABORADOR = "candidatura_detail_colaborador"
+
+    // Chat de suporte
+    const val CHAT_BENEFICIARIO = "chat_beneficiario"
+    const val CHAT_COLABORADOR_LIST = "chat_colaborador_list"
+    const val CHAT_COLABORADOR = "chat_colaborador/{chatId}"
 }
