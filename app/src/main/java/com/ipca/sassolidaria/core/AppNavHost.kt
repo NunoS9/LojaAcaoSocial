@@ -1,5 +1,7 @@
 package com.ipca.sassolidaria.core
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +25,7 @@ import com.ipca.sassolidaria.auth.RegisterView
 import com.ipca.sassolidaria.ui.screens.SplashView
 
 import com.ipca.sassolidaria.ui.colaborador.HomeColaboradorView
+import com.ipca.sassolidaria.ui.colaborador.AlertasValidadeView
 import com.ipca.sassolidaria.ui.colaborador.perfil.PerfilColaboradorView
 import com.ipca.sassolidaria.ui.colaborador.candidaturas.CandidaturasListView
 import com.ipca.sassolidaria.ui.colaborador.candidaturas.CandidaturaDetailView
@@ -42,7 +45,9 @@ import com.ipca.sassolidaria.ui.colaborador.beneficiarios.AgendamentoEditarView
 import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiarioEntregasView
 import com.ipca.sassolidaria.ui.colaborador.beneficiarios.ProcessarEntregaView
 
+
 import com.ipca.sassolidaria.ui.beneficiario.HomeBeneficiarioView
+import com.ipca.sassolidaria.ui.beneficiario.NotificacoesBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidosListView
 import com.ipca.sassolidaria.ui.beneficiario.pedidos.PedidoCreateView
@@ -61,6 +66,7 @@ import com.ipca.sassolidaria.ui.chat.ChatView
 import com.ipca.sassolidaria.ui.chat.ChatListView
 import com.ipca.sassolidaria.ui.chat.components.SuportePerfilItem
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost() {
 
@@ -234,6 +240,10 @@ fun AppNavHost() {
             ProcessarEntregaView(navController, idEntrega, idBeneficiario)
         }
 
+        composable(Routes.ALERTAS_VALIDADE_COLABORADOR) {
+            AlertasValidadeView(navController = navController)
+        }
+
         /* ------------------------- BENEFICIÁRIO ------------------------- */
 
         composable(Routes.HOME_BENEFICIARIO) {
@@ -284,6 +294,10 @@ fun AppNavHost() {
             EntregasListView(navController)
         }
 
+        composable(Routes.NOTIFICACOES_BENEFICIARIO) {
+            NotificacoesBeneficiarioView(navController = navController)
+        }
+
         /* ------------------------- CHAT ------------------------- */
 
         composable(Routes.CHAT_BENEFICIARIO) {
@@ -315,10 +329,10 @@ fun AppNavHost() {
 
         composable(Routes.PERFIL_UTILIZADOR) {
             setUser("UTILIZADOR")
-            PerfilUtilizadorView(navController)
+            PerfilUtilizadorView(navController = navController)
         }
 
-        composable(Routes.CANDIDATURA_UTILIZADOR) {
+            composable(Routes.CANDIDATURA_UTILIZADOR) {
             setUser("UTILIZADOR")
             CandidaturasUtilizadorView(navController)
         }
@@ -336,6 +350,7 @@ fun AppNavHost() {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun AppNavHostPreview() {

@@ -50,22 +50,6 @@ class PerfilUtilizadorViewModel(
                 onError("Erro ao atualizar nome.")
             }
     }
-
-    fun updatePassword(
-        newPassword: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        if (newPassword.isBlank()) {
-            onError("A nova password não pode estar vazia.")
-            return
-        }
-
-        auth.currentUser!!
-            .updatePassword(newPassword)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onError("Erro ao alterar password") }
-    }
 }
 
 data class PerfilUtilizadorState(

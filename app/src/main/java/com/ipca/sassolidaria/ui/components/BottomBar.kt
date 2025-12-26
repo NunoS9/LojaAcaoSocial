@@ -1,4 +1,5 @@
 package com.ipca.sassolidaria.ui.components
+
 import com.ipca.sassolidaria.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,22 +9,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.core.UserType
 import androidx.compose.ui.res.vectorResource
-
 
 private val ActiveGreen = Color(0xFF004B3C)
 private val InactiveGray = Color(0xFF9E9E9E)
@@ -52,7 +49,7 @@ fun BottomBar(navController: NavController) {
             BottomNavItem("Início", Routes.HOME_COLABORADOR, Icons.Filled.Home, Icons.Outlined.Home),
             BottomNavItem("Produtos", Routes.PRODUTOS_LIST, Icons.Filled.Inventory, Icons.Outlined.Inventory),
             BottomNavItem("Doações", Routes.DOACOES_LIST, Icons.Filled.VolunteerActivism, Icons.Outlined.VolunteerActivism),
-            BottomNavItem("Beneficiarios", Routes.BENEFICIARIOS_LIST, ImageVector.vectorResource(R.drawable.ic_beneficiarios), ImageVector.vectorResource(R.drawable.ic_beneficiarios)),
+            BottomNavItem("Beneficiários", Routes.BENEFICIARIOS_LIST, ImageVector.vectorResource(R.drawable.ic_beneficiarios), ImageVector.vectorResource(R.drawable.ic_beneficiarios)),
             BottomNavItem("Candidaturas", Routes.CANDIDATURAS_LIST, Icons.Filled.List, Icons.Outlined.List),
             BottomNavItem("Perfil", Routes.PERFIL_COLABORADOR, Icons.Filled.Person, Icons.Outlined.Person),
         )
@@ -69,7 +66,6 @@ fun BottomBar(navController: NavController) {
             BottomNavItem("Início", Routes.HOME_UTILIZADOR, Icons.Filled.Home, Icons.Outlined.Home),
             BottomNavItem("Candidaturas", Routes.CANDIDATURA_UTILIZADOR, Icons.Filled.List, Icons.Outlined.List),
             BottomNavItem("Perfil", Routes.PERFIL_UTILIZADOR, Icons.Filled.Person, Icons.Outlined.Person),
-
         )
     }
 
@@ -80,20 +76,18 @@ fun BottomBar(navController: NavController) {
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        items.forEach { item ->
 
+        items.forEach { item ->
             val selected = currentRoute == item.route
 
-            Column(
+            Box(
                 modifier = Modifier
-                    .width(70.dp)
+                    .size(44.dp)
                     .clickable {
-
-
                         navController.currentBackStackEntry
                             ?.savedStateHandle
                             ?.set("userType", userType.name)
@@ -103,11 +97,8 @@ fun BottomBar(navController: NavController) {
                             restoreState = true
                         }
                     },
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                contentAlignment = Alignment.Center
             ) {
-
-                // Ícone + bolha arredondada
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -124,17 +115,6 @@ fun BottomBar(navController: NavController) {
                         modifier = Modifier.size(22.dp)
                     )
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Label
-                Text(
-                    text = item.label,
-                    color = if (selected) ActiveGreen else InactiveGray,
-                    fontSize = 10.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
     }

@@ -1,7 +1,6 @@
 package com.ipca.sassolidaria.ui.beneficiario.perfil
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.utils.FirestoreCollections
@@ -29,12 +28,11 @@ class PerfilBeneficiarioViewModel(
     val uiState: StateFlow<PerfilBeneficiarioState> = _uiState
 
     init {
-        val uid = auth.currentUser?.uid ?: ""
-        _uiState.value = _uiState.value.copy(id_beneficiario = uid)
         loadUser()
+        loadBeneficiarioId()
     }
 
-    // CARREGAR DADOS DO UTILIZADOR
+    // CARREGAR DADOS DO UTILIZADOR (nome/email)
     private fun loadUser() {
         val uid = auth.currentUser?.uid ?: return
 
@@ -44,9 +42,28 @@ class PerfilBeneficiarioViewModel(
             .addOnSuccessListener { doc ->
                 _uiState.value = _uiState.value.copy(
                     nome = doc.getString("nome") ?: "",
-                    email = doc.getString("email") ?: "",
-                    id_beneficiario = uid
+                    email = doc.getString("email") ?: ""
                 )
+            }
+    }
+
+    // ✅ BUSCAR id_beneficiario real a partir da coleção BENEFICIARIOS
+    private fun loadBeneficiarioId() {
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection(FirestoreCollections.BENEFICIARIOS)
+            .whereEqualTo("id_utilizador", uid)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { snap ->
+                val doc = snap.documents.firstOrNull()
+                val idBenef = doc?.getString("id_beneficiario") ?: doc?.id ?: ""
+
+                _uiState.value = _uiState.value.copy(id_beneficiario = idBenef)
+            }
+            .addOnFailureListener {
+                // não travamos a UI; só deixamos vazio
+                _uiState.value = _uiState.value.copy(id_beneficiario = "")
             }
     }
 
@@ -74,26 +91,6 @@ class PerfilBeneficiarioViewModel(
             }
     }
 
-    fun updatePassword(
-        currentPassword: String,
-        newPassword: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val user = auth.currentUser ?: return onError("Sessão expirada.")
-        val email = user.email ?: return onError("Erro.")
-
-        val cred = EmailAuthProvider.getCredential(email, currentPassword)
-
-        user.reauthenticate(cred)
-            .addOnSuccessListener {
-                user.updatePassword(newPassword)
-                    .addOnSuccessListener { onSuccess() }
-                    .addOnFailureListener { onError("Erro ao atualizar password.") }
-            }
-            .addOnFailureListener { onError("Password atual incorreta.") }
-    }
-
     fun toggleDia(dia: String) {
         val dias = _uiState.value.diasSelecionados.toMutableList()
 
@@ -115,15 +112,20 @@ class PerfilBeneficiarioViewModel(
         _uiState.value = _uiState.value.copy(observacoes = txt)
     }
 
-    // ---------- GUARDAR PREFERÊNCIAS EM SUBCOLEÇÃO ----------
+    // ✅ GUARDAR PREFERÊNCIAS COM id_beneficiario (não UID)
     fun guardarPreferencias(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val uid = auth.currentUser?.uid ?: return onError("Erro.")
+        val idBeneficiario = _uiState.value.id_beneficiario
+
+        if (idBeneficiario.isBlank()) {
+            onError("Não foi possível identificar o beneficiário.")
+            return
+        }
 
         val data = mapOf(
-            "id_beneficiario" to uid,
+            "id_beneficiario" to idBeneficiario,
             "dias" to _uiState.value.diasSelecionados,
             "horaInicio" to _uiState.value.horaInicio,
             "horaFim" to _uiState.value.horaFim,
@@ -131,15 +133,13 @@ class PerfilBeneficiarioViewModel(
             "timestamp" to System.currentTimeMillis()
         )
 
-        // Subcoleção
         db.collection(FirestoreCollections.PREFERENCIAS_AGENDAMENTO)
-            .document(uid)
+            .document(idBeneficiario) // ✅ agora é o id_beneficiario
             .collection("items")
             .add(data)
             .addOnSuccessListener {
                 onSuccess()
 
-                // LIMPAR CAMPOS APÓS GUARDAR
                 _uiState.value = _uiState.value.copy(
                     diasSelecionados = emptyList(),
                     horaInicio = "",

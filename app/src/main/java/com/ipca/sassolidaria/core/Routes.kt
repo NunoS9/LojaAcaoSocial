@@ -28,6 +28,9 @@ object Routes {
     const val BENEFICIARIO_AGENDAMENTOS = "beneficiario/{idBeneficiario}/agendamentos"
     const val BENEFICIARIO_ENTREGAS = "beneficiario_entregas/{idBeneficiario}"
     const val ENTREGA_PROCESSAR = "entrega_processar/{idEntrega}/{idBeneficiario}"
+    const val ALERTAS_VALIDADE_COLABORADOR = "alertas_validade_colaborador"
+    const val NOTIFICACOES_COLABORADOR = "notificacoes_colaborador"
+
 
 
     // Beneficiário
@@ -39,6 +42,8 @@ object Routes {
     const val MARCACOES_LIST = "marcacoes_list"
     const val PERFIL_BENEFICIARIO = "perfil_beneficiario"
     const val PEDIDO_DETAILS_BENEFICIARIO = "pedido_details_beneficiario"
+
+    const val NOTIFICACOES_BENEFICIARIO = "notificacoes_beneficiario"
 
 
 

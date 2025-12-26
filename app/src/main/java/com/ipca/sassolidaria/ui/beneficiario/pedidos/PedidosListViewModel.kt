@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -11,6 +12,8 @@ import com.ipca.sassolidaria.data.model.Pedido
 import com.ipca.sassolidaria.data.model.enums.EstadoPedido
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -49,22 +52,24 @@ class PedidosListViewModel(
         // Remove listener antigo se existir
         listenerRegistration?.remove()
 
-        // 1) descobrir o id do beneficiário a partir do uid (id_utilizador)
-        db.collection(FirestoreCollections.BENEFICIARIOS)
-            .whereEqualTo("id_utilizador", uid)
-            .limit(1)
-            .get()
-            .addOnSuccessListener { benefSnapshot ->
+        // ✅ Agora tudo em coroutine/await (mais "Compose-friendly")
+        viewModelScope.launch {
+            try {
+                val benefSnapshot = db.collection(FirestoreCollections.BENEFICIARIOS)
+                    .whereEqualTo("id_utilizador", uid)
+                    .limit(1)
+                    .get()
+                    .await()
 
                 val benefDoc = benefSnapshot.documents.firstOrNull()
                 if (benefDoc == null) {
                     pedidosState = ResultState.Success(emptyList())
-                    return@addOnSuccessListener
+                    return@launch
                 }
 
                 val idBeneficiario = benefDoc.getString("id_beneficiario") ?: benefDoc.id
 
-                // 2) agora sim: ouvir pedidos do beneficiário (em realtime)
+                // Listener realtime
                 listenerRegistration = db.collection(FirestoreCollections.PEDIDOS)
                     .whereEqualTo("id_beneficiario", idBeneficiario)
                     .addSnapshotListener { snapshot, e ->
@@ -91,10 +96,10 @@ class PedidosListViewModel(
 
                         pedidosState = ResultState.Success(pedidos)
                     }
+            } catch (e: Exception) {
+                pedidosState = ResultState.Error(e.message ?: "Erro ao carregar beneficiário.")
             }
-            .addOnFailureListener { e ->
-                pedidosState = ResultState.Error("Erro ao carregar beneficiário: ${e.message}")
-            }
+        }
     }
 
     override fun onCleared() {
