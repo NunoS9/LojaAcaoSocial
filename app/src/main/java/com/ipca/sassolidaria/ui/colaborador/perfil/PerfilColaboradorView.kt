@@ -1,5 +1,6 @@
 package com.ipca.sassolidaria.ui.colaborador.perfil
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -16,8 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ipca.sassolidaria.R
+import com.ipca.sassolidaria.ui.colaborador.relatorio.PerfilColaboradorRelatorioViewModel
+import com.ipca.sassolidaria.ui.colaborador.relatorio.RelatorioDialog
+import com.ipca.sassolidaria.ui.colaborador.relatorio.calcularIntervaloRelatorio
+import com.ipca.sassolidaria.ui.colaborador.relatorio.monthNamePt
+import com.ipca.sassolidaria.utils.PdfReportGenerator
+import com.ipca.sassolidaria.utils.ResultState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Date
 
 private val Green = Color(0xFF004B3C)
 private val RedButton = Color(0xFFE57373)
@@ -30,11 +39,25 @@ fun PerfilColaboradorView(
     bottomBar: @Composable () -> Unit = {},
     suporteSlot: @Composable () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
+
+    // VM do relatório (está em ui/colaborador/relatorio)
+    val relatorioVm: PerfilColaboradorRelatorioViewModel = viewModel()
 
     var showEditDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    var generatingReport by remember { mutableStateOf(false) }
+    var reportError by remember { mutableStateOf<String?>(null) }
+
+    // popup mês/ano
+    var showReportDialog by remember { mutableStateOf(false) }
+    val calNow = remember { java.util.Calendar.getInstance() }
+    var selectedMonth by remember { mutableIntStateOf(calNow.get(java.util.Calendar.MONTH)) } // 0..11
+    var selectedYear by remember { mutableIntStateOf(calNow.get(java.util.Calendar.YEAR)) }
+    var reportAllTime by remember { mutableStateOf(false) }
 
     Scaffold(bottomBar = bottomBar) { padding ->
 
@@ -51,7 +74,6 @@ fun PerfilColaboradorView(
                     .padding(top = 20.dp, bottom = 26.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Icon(
                     painter = painterResource(id = R.drawable.blue_user_circle),
                     contentDescription = null,
@@ -87,23 +109,153 @@ fun PerfilColaboradorView(
             )
 
             Divider(color = LightGrayLine)
-            /* ---------- SUPORTE ---------- */
+
+            // ✅ Abrir dialog do relatório (sem mexer no NavHost)
+            PerfilItem(
+                icon = R.drawable.ic_report,
+                text = "Gerar Relatório (PDF)",
+                onClick = { if (!generatingReport) showReportDialog = true }
+            )
+
+
+            if (generatingReport) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text("A gerar relatório...", fontSize = 13.sp, color = Color.Gray)
+                }
+            }
+
+            if (reportError != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = reportError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp
+                )
+            }
+
+            Divider(color = LightGrayLine)
+
             suporteSlot()
 
             Divider(color = LightGrayLine)
 
             Spacer(Modifier.weight(1f))
 
-
             Button(
                 onClick = { showLogoutDialog = true },
-                modifier = Modifier.fillMaxWidth().height(46.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
                 shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = RedButton)
             ) {
                 Text("Sair", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
         }
+    }
+
+    // ---------- DIALOG RELATÓRIO (UI está noutro ficheiro) ----------
+    if (showReportDialog) {
+        RelatorioDialog(
+            initialMonth = selectedMonth,
+            initialYear = selectedYear,
+            initialAllTime = reportAllTime,
+            onDismiss = { showReportDialog = false },
+            onConfirm = { month, year, allTime ->
+                showReportDialog = false
+
+                selectedMonth = month
+                selectedYear = year
+                reportAllTime = allTime
+
+                val (start, end) = calcularIntervaloRelatorio(month, year, allTime)
+
+                generatingReport = true
+                reportError = null
+
+                relatorioVm.carregarRelatorioCompleto(start, end) { result ->
+                    when (result) {
+                        is ResultState.Loading -> Unit
+
+                        is ResultState.Error -> {
+                            generatingReport = false
+                            reportError = result.message
+                        }
+
+                        is ResultState.Success -> {
+                            val r = result.data
+                            val c = r.contagens
+
+                            val report = PdfReportGenerator.ReportData(
+                                title = "Relatório - Loja Social",
+                                subtitle = if (allTime) "Filtro: Tudo" else "Filtro: ${monthNamePt(month)} $year",
+                                generatedAt = Date(),
+                                blocks = listOf(
+                                    PdfReportGenerator.Block.SectionTitle("Resumo"),
+                                    PdfReportGenerator.Block.Paragraph(
+                                        listOf(
+                                            "Pedidos pendentes: ${c.pedidosPendentes}",
+                                            "Pedidos entregues: ${c.pedidosEntregues}",
+                                            "Pedidos cancelados: ${c.pedidosCancelados}",
+                                            "Entregas pendentes: ${c.entregasPendentes}",
+                                            "Entregas prontas: ${c.entregasProntas}",
+                                            "Entregas entregues: ${c.entregasEntregues}",
+                                            "Entregas canceladas: ${c.entregasCanceladas}",
+                                            "Candidaturas em análise: ${c.candidaturasEmAnalise}",
+                                            "Candidaturas aprovadas: ${c.candidaturasAprovadas}",
+                                            "Candidaturas rejeitadas: ${c.candidaturasRejeitadas}"
+                                        )
+                                    ),
+
+
+                                    PdfReportGenerator.Block.Table(
+                                        title = "Pedidos",
+                                        headers = listOf("Nome", "Estado", "Data"),
+                                        rows = r.pedidosRows
+                                    ),
+
+
+                                    PdfReportGenerator.Block.Table(
+                                        title = "Entregas",
+                                        headers = listOf("Beneficiário", "Estado", "Tipo", "Agendamento"),
+                                        rows = r.entregasRows
+                                    ),
+
+
+                                    PdfReportGenerator.Block.Table(
+                                        title = "Stock atual",
+                                        headers = listOf("Produto", "Disponível", "Total"),
+                                        rows = r.stockRows
+                                    )
+                                )
+                            )
+
+                            val uri = PdfReportGenerator.generateAndSave(context, report)
+                            generatingReport = false
+
+                            if (uri == null) {
+                                reportError = "Não foi possível guardar o PDF."
+                                return@carregarRelatorioCompleto
+                            }
+
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(uri, "application/pdf")
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(Intent.createChooser(intent, "Abrir relatório"))
+                        }
+
+                        else -> Unit
+                    }
+                }
+            }
+        )
     }
 
     // ---------- EDITAR DADOS ----------
@@ -113,7 +265,6 @@ fun PerfilColaboradorView(
             email = state.email,
             onCancel = { showEditDialog = false },
             onSave = { nomeNovo, success, error ->
-
                 viewModel.updateName(
                     newName = nomeNovo,
                     onSuccess = { success() },
@@ -129,7 +280,6 @@ fun PerfilColaboradorView(
         AlterarSenhaDialog(
             onCancel = { showPasswordDialog = false },
             onSave = { passAtual, novaPass, success, error ->
-
                 viewModel.updatePassword(
                     currentPassword = passAtual,
                     newPassword = novaPass,
@@ -163,7 +313,10 @@ fun PerfilColaboradorView(
 @Composable
 fun PerfilItem(icon: Int, text: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -183,6 +336,8 @@ fun PerfilItem(icon: Int, text: String, onClick: () -> Unit) {
         )
     }
 }
+
+/* ---------- DIALOGS  ---------- */
 
 @Composable
 fun EditarDadosDialog(
@@ -208,7 +363,6 @@ fun EditarDadosDialog(
         title = { Text("Editar Dados") },
         text = {
             Column {
-
                 if (success.isNotEmpty()) {
                     Text(success, color = Color(0xFF2E7D32))
                     Spacer(Modifier.height(10.dp))
@@ -293,7 +447,6 @@ fun AlterarSenhaDialog(
         title = { Text("Alterar Senha") },
         text = {
             Column {
-
                 if (success.isNotEmpty()) {
                     Text(success, color = Color(0xFF2E7D32))
                     Spacer(Modifier.height(10.dp))
