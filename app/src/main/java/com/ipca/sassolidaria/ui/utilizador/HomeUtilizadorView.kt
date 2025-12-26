@@ -10,15 +10,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.ipca.sassolidaria.core.Routes
@@ -26,6 +25,10 @@ import com.ipca.sassolidaria.core.UserType
 import com.ipca.sassolidaria.data.model.Produto
 import com.ipca.sassolidaria.ui.components.BottomBar
 
+private val ScreenBg = Color(0xFFF6F7FB)
+private val DividerColor = Color(0xFFB0B0B0)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeUtilizadorView(
     navController: NavController,
@@ -34,29 +37,35 @@ fun HomeUtilizadorView(
     val state = viewModel.uiState
 
     Scaffold(
-        bottomBar = { BottomBar(navController = navController) }
+        topBar = {
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Home",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg,
+                        scrolledContainerColor = ScreenBg
+                    )
+                )
+                Divider(color = DividerColor, thickness = 1.dp)
+            }
+        },
+        bottomBar = { BottomBar(navController = navController) },
+        containerColor = ScreenBg
     ) { innerPadding ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF6F7FB)) // fundo clarinho
+                .background(ScreenBg)
         ) {
-
-            // TÍTULO "Home"
-            Text(
-                text = "Home",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                textAlign = TextAlign.Center
-            )
-
             Spacer(Modifier.height(16.dp))
 
-            // Botão Notificações
             Box(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -64,9 +73,7 @@ fun HomeUtilizadorView(
                     .height(40.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color(0xFFE3F3ED))
-                    .clickable {
-                        navController.navigate(Routes.NOTIFICACOES_UTILIZADOR)
-                    },
+                    .clickable { navController.navigate(Routes.NOTIFICACOES_UTILIZADOR) },
                 contentAlignment = Alignment.CenterStart
             ) {
                 Row(
@@ -91,7 +98,6 @@ fun HomeUtilizadorView(
 
             Spacer(Modifier.height(24.dp))
 
-            // Título da lista
             Text(
                 text = "Todos os Itens em Stock",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
@@ -152,7 +158,6 @@ private fun ProdutoStockCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // Ícone dinâmico consoante TipoProduto
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -170,7 +175,6 @@ private fun ProdutoStockCard(
             Spacer(Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-
                 Text(
                     text = item.nome,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
@@ -200,8 +204,6 @@ private fun ProdutoStockCard(
 @Composable
 fun HomeUtilizadorPreview() {
     val nav = rememberNavController()
-    // para a BottomBar saber que é utilizador
     nav.currentBackStackEntry?.savedStateHandle?.set("userType", UserType.UTILIZADOR.name)
-
     HomeUtilizadorView(navController = nav)
 }

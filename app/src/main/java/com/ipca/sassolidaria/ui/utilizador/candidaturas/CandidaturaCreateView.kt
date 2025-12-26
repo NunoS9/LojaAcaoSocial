@@ -2,6 +2,7 @@ package com.ipca.sassolidaria.ui.utilizador.candidaturas
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,22 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,11 +23,12 @@ import androidx.navigation.NavController
 import com.ipca.sassolidaria.data.model.enums.GrauCurso
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
-import androidx.compose.ui.unit.sp
-
 
 private val GreenDark = Color(0xFF004B3C)
+private val ScreenBg = Color(0xFFF6F7FB)
+private val DividerColor = Color(0xFFB0B0B0)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CandidaturaCreateView(
     navController: NavController,
@@ -48,20 +36,15 @@ fun CandidaturaCreateView(
 ) {
     val submitState = viewModel.submitState
 
-    // Data de nascimento (por agora só string local)
     var dataNascimento by remember { mutableStateOf("") }
-
-    // Documento selecionado
     var selectedFileName by remember { mutableStateOf<String?>(null) }
 
-    // Picker de ficheiros
     val documentPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         selectedFileName = uri?.lastPathSegment
     }
 
-    // Quando submeter com sucesso -> volta atrás (Minhas Candidaturas)
     LaunchedEffect(submitState) {
         if (submitState is ResultState.Success) {
             navController.popBackStack()
@@ -69,7 +52,30 @@ fun CandidaturaCreateView(
     }
 
     Scaffold(
-        bottomBar = { BottomBar(navController = navController) }
+        topBar = {
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Submeter Candidatura",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Voltar")
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg,
+                        scrolledContainerColor = ScreenBg
+                    )
+                )
+                Divider(color = DividerColor, thickness = 1.dp)
+            }
+        },
+        bottomBar = { BottomBar(navController = navController) },
+        containerColor = ScreenBg
     ) { innerPadding ->
 
         val scrollState = rememberScrollState()
@@ -82,27 +88,6 @@ fun CandidaturaCreateView(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            // ----------------- HEADER -----------------
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = "Voltar"
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Submeter Candidatura",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            // ----------------- TÍTULO / ANO LETIVO -----------------
             Text(
                 text = "Detalhes da Candidatura",
                 style = MaterialTheme.typography.titleMedium,
@@ -119,7 +104,6 @@ fun CandidaturaCreateView(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // ----------------- IDENTIFICAÇÃO -----------------
             Text(
                 text = "Identificação do candidato",
                 style = MaterialTheme.typography.titleSmall,
@@ -181,7 +165,6 @@ fun CandidaturaCreateView(
                 )
             }
 
-            // ----------------- DADOS ACADÉMICOS -----------------
             Text(
                 text = "Dados académicos",
                 style = MaterialTheme.typography.titleSmall,
@@ -216,8 +199,6 @@ fun CandidaturaCreateView(
                 )
             }
 
-
-
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -242,7 +223,6 @@ fun CandidaturaCreateView(
                 )
             }
 
-            // ----------------- TIPOLOGIA DO PEDIDO -----------------
             Text(
                 text = "Tipologia do pedido",
                 style = MaterialTheme.typography.titleSmall,
@@ -267,7 +247,6 @@ fun CandidaturaCreateView(
                 )
             }
 
-            // ----------------- OUTROS APOIOS -----------------
             Text(
                 text = "Outros apoios",
                 style = MaterialTheme.typography.titleSmall,
@@ -295,7 +274,6 @@ fun CandidaturaCreateView(
                 )
             }
 
-            // ----------------- UPLOAD DE DOCUMENTOS -----------------
             Text(
                 text = "Upload de documentos",
                 style = MaterialTheme.typography.titleSmall,
@@ -345,8 +323,6 @@ fun CandidaturaCreateView(
                 }
             }
 
-
-            // ----------------- ERROS + SUBMETER (VERDE) -----------------
             if (submitState is ResultState.Error) {
                 Text(
                     text = submitState.message,
@@ -367,9 +343,7 @@ fun CandidaturaCreateView(
                 )
             ) {
                 if (submitState is ResultState.Loading) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(
                             modifier = Modifier
                                 .size(18.dp)
@@ -386,8 +360,6 @@ fun CandidaturaCreateView(
         }
     }
 }
-
-// ----------------- HELPERS -----------------
 
 @Composable
 private fun ApoioCheckbox(
@@ -422,8 +394,6 @@ private fun GrauCheckbox(
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = label
-        )
+        Text(text = label)
     }
 }

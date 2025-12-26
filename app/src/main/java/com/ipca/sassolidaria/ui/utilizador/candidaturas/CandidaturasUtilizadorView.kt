@@ -1,30 +1,31 @@
 package com.ipca.sassolidaria.ui.utilizador.candidaturas
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.data.model.Candidatura
 import com.ipca.sassolidaria.data.model.enums.EstadoCandidatura
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
 import java.text.SimpleDateFormat
 import java.util.Locale
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import com.ipca.sassolidaria.core.Routes
-import androidx.compose.ui.graphics.Color
 
 private val GreenDark = Color(0xFF004B3C)
+private val ScreenBg = Color(0xFFF6F7FB)
+private val DividerColor = Color(0xFFB0B0B0)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,9 +41,21 @@ fun CandidaturasUtilizadorView(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Minhas Candidaturas") }
-            )
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Minhas Candidaturas",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg,
+                        scrolledContainerColor = ScreenBg
+                    )
+                )
+                Divider(color = DividerColor, thickness = 1.dp)
+            }
         },
         bottomBar = { BottomBar(navController = navController) },
         floatingActionButton = {
@@ -51,14 +64,11 @@ fun CandidaturasUtilizadorView(
                 containerColor = GreenDark,
                 contentColor = Color.White
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "Nova candidatura"
-                )
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "Nova candidatura")
             }
         },
         floatingActionButtonPosition = FabPosition.End,
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = ScreenBg
     ) { innerPadding ->
 
         Box(
@@ -70,9 +80,7 @@ fun CandidaturasUtilizadorView(
             when (state) {
                 is ResultState.Idle,
                 is ResultState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
                 is ResultState.Error -> {
@@ -96,9 +104,7 @@ fun CandidaturasUtilizadorView(
                     val candidatura = state.data
                     if (candidatura == null) {
                         SemCandidaturaView(
-                            onCriarCandidatura = {
-                                // TODO: navegar para ecrã de criação de candidatura
-                            },
+                            onCriarCandidatura = { /* opcional */ },
                             modifier = Modifier.align(Alignment.Center)
                         )
                     } else {
@@ -141,9 +147,7 @@ private fun CandidaturaDetalheCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -154,15 +158,8 @@ private fun CandidaturaDetalheCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = "Curso: ${candidatura.curso}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Text(
-                text = "Nº Estudante: ${candidatura.num_estudante}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = "Curso: ${candidatura.curso}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Nº Estudante: ${candidatura.num_estudante}", style = MaterialTheme.typography.bodyMedium)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -179,17 +176,49 @@ private fun CandidaturaDetalheCard(
 }
 
 @Composable
-private fun EstadoCandidaturaBadge(
-    estado: EstadoCandidatura
-) {
-    val label = when (estado) {
-        EstadoCandidatura.EM_ANALISE -> "Em análise"
-        EstadoCandidatura.APROVADA -> "Aprovada"
-        EstadoCandidatura.REJEITADA -> "Rejeitada"
+private fun EstadoCandidaturaBadge(estado: EstadoCandidatura) {
+    val label: String
+    val bg: Color
+    val fg: Color
+    val border: Color
+
+    when (estado) {
+        EstadoCandidatura.EM_ANALISE -> {
+            label = "Em análise"
+            bg = Color(0xFFFFF3CD)
+            fg = Color(0xFF8A6D3B)
+            border = Color(0xFFE6D59E)
+        }
+
+        EstadoCandidatura.APROVADA -> {
+            label = "Aprovada"
+            bg = Color(0xFFD4EDDA)
+            fg = Color(0xFF2E7D32)
+            border = Color(0xFFAED7B7)
+        }
+
+        EstadoCandidatura.REJEITADA -> {
+            label = "Rejeitada"
+            bg = Color(0xFFF8D7DA)
+            fg = Color(0xFFD32F2F)
+            border = Color(0xFFE6B3B8)
+        }
     }
 
     AssistChip(
-        onClick = { },
-        label = { Text(label) }
+        onClick = { /* sem ação */ },
+        label = {
+            Text(
+                text = label,
+                color = fg,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = bg,
+            labelColor = fg
+        ),
+        border = BorderStroke(1.dp, border)
     )
 }
