@@ -31,6 +31,8 @@ private val LightGrayLine = Color(0xFFE0E0E0)
 @Composable
 fun PerfilUtilizadorView(
     navController: NavController,
+    bottomBar: @Composable () -> Unit = {},
+    onLogoutConfirmed: () -> Unit = {},
     viewModel: PerfilUtilizadorViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -39,7 +41,9 @@ fun PerfilUtilizadorView(
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    Scaffold { padding ->
+    Scaffold(
+        bottomBar = bottomBar
+    ) { padding ->
 
         Column(
             modifier = Modifier

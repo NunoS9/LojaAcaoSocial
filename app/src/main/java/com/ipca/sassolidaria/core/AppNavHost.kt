@@ -315,10 +315,18 @@ fun AppNavHost() {
 
         composable(Routes.PERFIL_UTILIZADOR) {
             setUser("UTILIZADOR")
-            PerfilUtilizadorView(navController)
-        }
+                PerfilUtilizadorView(
+                    navController = navController,
+                    bottomBar = { BottomBar(navController) },
+                    onLogoutConfirmed = {
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(0)
+                        }
+                    }
+                )
+            }
 
-        composable(Routes.CANDIDATURA_UTILIZADOR) {
+            composable(Routes.CANDIDATURA_UTILIZADOR) {
             setUser("UTILIZADOR")
             CandidaturasUtilizadorView(navController)
         }
