@@ -6,13 +6,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.ipca.sassolidaria.data.model.Agendamento
 import com.ipca.sassolidaria.data.model.Beneficiario
 import com.ipca.sassolidaria.data.model.Entrega
-import com.ipca.sassolidaria.data.model.ItemEntrega
-import com.ipca.sassolidaria.data.model.Produto
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
@@ -22,9 +21,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 data class EntregaUi(
-    val id: String,                 // id_entrega (ou id do doc)
+    val id: String,
     val estado: EstadoEntrega,
-    val dataHora: String            // data do agendamento formatada
+    val dataHora: String
 )
 
 class EntregasListViewModel(
@@ -35,13 +34,11 @@ class EntregasListViewModel(
     var entregasState: ResultState<List<EntregaUi>> by mutableStateOf(ResultState.Loading)
         private set
 
-    // estado para o popup de detalhes (lista de itens dessa entrega)
-    var detalhesState: ResultState<List<String>> by mutableStateOf(ResultState.Idle)
-        private set
-
     private val dateTimeFormat = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
-
     private var listenerRegistration: ListenerRegistration? = null
+
+    // 🚀 cache em memória: idAgendamento -> dataHora formatada
+    private val agendamentoCache = mutableMapOf<String, String>()
 
     init {
         carregarEntregasDoBeneficiario()
@@ -58,7 +55,6 @@ class EntregasListViewModel(
 
         viewModelScope.launch {
             try {
-                // 1) Buscar o beneficiário ligado a este utilizador
                 val benefSnap = db.collection(FirestoreCollections.BENEFICIARIOS)
                     .whereEqualTo("id_utilizador", uid)
                     .limit(1)
@@ -75,13 +71,9 @@ class EntregasListViewModel(
                 val beneficiarioId =
                     benef?.id_beneficiario.takeUnless { it.isNullOrBlank() } ?: benefDoc.id
 
-                // 2) Listener em tempo real das ENTREGAS desse beneficiário
                 startEntregasListener(beneficiarioId)
-
             } catch (e: Exception) {
-                entregasState = ResultState.Error(
-                    e.message ?: "Erro ao carregar dados do beneficiário."
-                )
+                entregasState = ResultState.Error(e.message ?: "Erro ao carregar dados do beneficiário.")
             }
         }
     }
@@ -96,125 +88,79 @@ class EntregasListViewModel(
                     entregasState = ResultState.Error("Erro ao ouvir entregas: ${e.message}")
                     return@addSnapshotListener
                 }
-
                 if (snapshot == null) {
                     entregasState = ResultState.Error("Erro ao carregar entregas.")
                     return@addSnapshotListener
                 }
 
+                val entregas = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Entrega::class.java)?.let { ent ->
+                        ent.copy(id_entrega = ent.id_entrega.ifBlank { doc.id })
+                    }
+                }
+
+                // ⚡ primeiro: se já tenho cache, consigo logo desenhar (rápido)
+                val uiRapido = entregas.map { ent ->
+                    val idEntrega = ent.id_entrega
+                    val dataHora = ent.id_agendamento
+                        .takeIf { it.isNotBlank() }
+                        ?.let { agendamentoCache[it].orEmpty() }
+                        .orEmpty()
+
+                    EntregaUi(
+                        id = idEntrega,
+                        estado = ent.estado,
+                        dataHora = dataHora
+                    )
+                }
+                entregasState = ResultState.Success(uiRapido)
+
+                // 🚀 depois: buscar só os agendamentos que faltam e atualizar novamente
                 viewModelScope.launch {
                     try {
-                        val uiList = snapshot.documents.mapNotNull { doc ->
-                            val entrega = doc.toObject(Entrega::class.java) ?: return@mapNotNull null
-                            val idEntrega = entrega.id_entrega.ifBlank { doc.id }
+                        val agIds = entregas.mapNotNull { it.id_agendamento.takeIf { id -> id.isNotBlank() } }
+                            .distinct()
 
-                            // buscar data do agendamento (se existir)
-                            val dataHora = if (entrega.id_agendamento.isNotBlank()) {
-                                val agSnap = db.collection(FirestoreCollections.AGENDAMENTOS)
-                                    .document(entrega.id_agendamento)
+                        val missing = agIds.filterNot { agendamentoCache.containsKey(it) }
+                        if (missing.isNotEmpty()) {
+                            // whereIn tem limite (10), por isso chunk
+                            val chunks = missing.chunked(10)
+
+                            for (chunk in chunks) {
+                                val snap = db.collection(FirestoreCollections.AGENDAMENTOS)
+                                    .whereIn(FieldPath.documentId(), chunk)
                                     .get()
                                     .await()
 
-                                val agendamento = agSnap.toObject(Agendamento::class.java)
-                                agendamento?.data_agendada?.let { dateTimeFormat.format(it) } ?: ""
-                            } else {
-                                ""
+                                snap.documents.forEach { d ->
+                                    val ag = d.toObject(Agendamento::class.java)
+                                    val dataTxt = ag?.data_agendada?.let { dateTimeFormat.format(it) } ?: ""
+                                    agendamentoCache[d.id] = dataTxt
+                                }
                             }
 
-                            EntregaUi(
-                                id = idEntrega,
-                                estado = entrega.estado,
-                                dataHora = dataHora
-                            )
-                        }
+                            // Re-montar lista com cache preenchida
+                            val uiFinal = entregas.map { ent ->
+                                val idEntrega = ent.id_entrega
+                                val dataHora = ent.id_agendamento
+                                    .takeIf { it.isNotBlank() }
+                                    ?.let { agendamentoCache[it].orEmpty() }
+                                    .orEmpty()
 
-                        entregasState = ResultState.Success(uiList)
-                    } catch (ex: Exception) {
-                        entregasState = ResultState.Error(
-                            ex.message ?: "Erro ao processar entregas."
-                        )
+                                EntregaUi(
+                                    id = idEntrega,
+                                    estado = ent.estado,
+                                    dataHora = dataHora
+                                )
+                            }
+
+                            entregasState = ResultState.Success(uiFinal)
+                        }
+                    } catch (_: Exception) {
+                        // não bloqueia a lista; mantém o que já mostrou
                     }
                 }
             }
-    }
-
-    // ---------- DETALHES: ITENS DA ENTREGA ----------
-
-    fun carregarItensEntrega(entregaId: String) {
-        detalhesState = ResultState.Loading
-
-        viewModelScope.launch {
-            try {
-                // 1) tentar apanhar o doc de entrega pelo id passado
-                val entregaDocDirect = db.collection(FirestoreCollections.ENTREGAS)
-                    .document(entregaId)
-                    .get()
-                    .await()
-
-                val entregaDoc = if (entregaDocDirect.exists()) {
-                    entregaDocDirect
-                } else {
-                    // se entregaId não for o docId, pode ser o campo id_entrega
-                    val snap = db.collection(FirestoreCollections.ENTREGAS)
-                        .whereEqualTo("id_entrega", entregaId)
-                        .limit(1)
-                        .get()
-                        .await()
-                    snap.documents.firstOrNull()
-                }
-
-                if (entregaDoc == null) {
-                    detalhesState = ResultState.Error("Entrega não encontrada.")
-                    return@launch
-                }
-
-                val entrega = entregaDoc.toObject(Entrega::class.java)
-
-                val possibleEntregaIds = mutableListOf<String>()
-                possibleEntregaIds.add(entregaDoc.id)
-                entrega?.id_entrega
-                    ?.takeIf { it.isNotBlank() }
-                    ?.let { possibleEntregaIds.add(it) }
-
-                // 2) buscar itens_entrega que apontam para esta entrega
-                val itensSnap = db.collection(FirestoreCollections.ITENS_ENTREGA)
-                    .whereIn("id_entrega", possibleEntregaIds.distinct())
-                    .get()
-                    .await()
-
-                if (itensSnap.isEmpty) {
-                    detalhesState = ResultState.Error("Nenhum item associado a esta entrega.")
-                    return@launch
-                }
-
-                val linhas = mutableListOf<String>()
-
-                for (itemDoc in itensSnap.documents) {
-                    val item = itemDoc.toObject(ItemEntrega::class.java) ?: continue
-
-                    val prodSnap = db.collection(FirestoreCollections.PRODUTOS)
-                        .document(item.id_produto)
-                        .get()
-                        .await()
-
-                    val produto = prodSnap.toObject(Produto::class.java)
-                    val nome = produto?.nome ?: "Produto"
-
-                    linhas.add("$nome (${item.quantidade})")
-                }
-
-                detalhesState = ResultState.Success(linhas)
-
-            } catch (e: Exception) {
-                detalhesState = ResultState.Error(
-                    e.message ?: "Erro ao carregar itens da entrega."
-                )
-            }
-        }
-    }
-
-    fun limparDetalhes() {
-        detalhesState = ResultState.Idle
     }
 
     override fun onCleared() {

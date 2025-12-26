@@ -39,7 +39,7 @@ class PedidoCreateViewModel(
 
         viewModelScope.launch {
             try {
-                // ✅ 1) descobrir o ID do beneficiário (doc da coleção BENEFICIARIOS) através do id_utilizador = uid
+                // ✅ 1) descobrir o ID do beneficiário através do id_utilizador = uid
                 val benefSnapshot = db.collection(FirestoreCollections.BENEFICIARIOS)
                     .whereEqualTo("id_utilizador", uid)
                     .limit(1)
@@ -55,29 +55,24 @@ class PedidoCreateViewModel(
                 // ✅ usar campo id_beneficiario se existir, senão usar o id do documento
                 val idBeneficiario = benefDoc.getString("id_beneficiario") ?: benefDoc.id
 
-                // Cria o objeto Pedido
                 val pedido = Pedido(
-                    id_pedido = "",                 // deixamos vazio, vamos usar o id do doc
-                    id_beneficiario = idBeneficiario, // ✅ AGORA guarda o id do beneficiário (e não o uid)
+                    id_pedido = "",
+                    id_beneficiario = idBeneficiario,
                     id_agendamento = "",
                     data_pedido = Date(),
                     descricao = descricao,
                     estado = EstadoPedido.PENDENTE
                 )
 
-                // Cria o doc no Firestore
                 val docRef = db.collection(FirestoreCollections.PEDIDOS)
                     .add(pedido)
                     .await()
 
-                // Opcional: guardar o id do documento no próprio pedido
                 docRef.update("id_pedido", docRef.id).await()
 
                 submitState = ResultState.Success(Unit)
             } catch (e: Exception) {
-                submitState = ResultState.Error(
-                    e.message ?: "Erro ao criar pedido."
-                )
+                submitState = ResultState.Error(e.message ?: "Erro ao criar pedido.")
             }
         }
     }

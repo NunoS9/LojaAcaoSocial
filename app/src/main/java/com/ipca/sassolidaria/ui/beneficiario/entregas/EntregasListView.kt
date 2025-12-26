@@ -33,10 +33,11 @@ private val ChipGreenText = Color(0xFF2E7D32)
 @Composable
 fun EntregasListView(
     navController: NavController,
-    viewModel: EntregasListViewModel = viewModel()
+    viewModel: EntregasListViewModel = viewModel(),
+    detalhesVm: EntregaDetalhesViewModel = viewModel()
 ) {
     val state = viewModel.entregasState
-    val detalhesState = viewModel.detalhesState
+    val detalhesState = detalhesVm.detalhesState
 
     var showDialog by remember { mutableStateOf(false) }
 
@@ -57,11 +58,9 @@ fun EntregasListView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = "Voltar"
-                    )
+                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Voltar")
                 }
+
                 Text(
                     text = "Minhas Entregas",
                     style = MaterialTheme.typography.titleMedium,
@@ -69,6 +68,7 @@ fun EntregasListView(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center
                 )
+
                 Spacer(modifier = Modifier.width(48.dp))
             }
 
@@ -78,9 +78,7 @@ fun EntregasListView(
                 is ResultState.Loading -> Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                ) { CircularProgressIndicator() }
 
                 is ResultState.Error -> Box(
                     modifier = Modifier.fillMaxSize(),
@@ -99,9 +97,7 @@ fun EntregasListView(
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
-                        ) {
-                            Text("Ainda não existem entregas.")
-                        }
+                        ) { Text("Ainda não existem entregas.") }
                     } else {
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -112,7 +108,7 @@ fun EntregasListView(
                                     entrega = entrega,
                                     onVerDetalhes = {
                                         showDialog = true
-                                        viewModel.carregarItensEntrega(entrega.id)
+                                        detalhesVm.carregarItensEntrega(entrega.id)
                                     }
                                 )
                             }
@@ -120,65 +116,16 @@ fun EntregasListView(
                     }
                 }
 
-                ResultState.Idle -> {}
+                ResultState.Idle -> Unit
             }
         }
 
-        // --------- POPUP DE DETALHES ----------
         if (showDialog) {
-            AlertDialog(
-                onDismissRequest = {
+            EntregaDetalhesDialogView(
+                detalhesState = detalhesState,
+                onDismiss = {
                     showDialog = false
-                    viewModel.limparDetalhes()
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showDialog = false
-                            viewModel.limparDetalhes()
-                        }
-                    ) {
-                        Text("Fechar")
-                    }
-                },
-                title = {
-                    Text(text = "Itens da entrega")
-                },
-                text = {
-                    when (detalhesState) {
-                        is ResultState.Loading -> {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-
-                        is ResultState.Error -> {
-                            Text(
-                                text = (detalhesState as ResultState.Error).message,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-
-                        is ResultState.Success -> {
-                            val itens = (detalhesState as ResultState.Success<List<String>>).data
-                            if (itens.isEmpty()) {
-                                Text("Nenhum item associado a esta entrega.")
-                            } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    itens.forEach { linha ->
-                                        Text("• $linha")
-                                    }
-                                }
-                            }
-                        }
-
-                        ResultState.Idle -> {
-                            Text("Carregue em 'Ver Detalhes' para ver os itens.")
-                        }
-                    }
+                    detalhesVm.limparDetalhes()
                 }
             )
         }
@@ -250,20 +197,11 @@ private fun EntregaCard(
 @Composable
 private fun EstadoEntregaChip(estado: EstadoEntrega) {
     val (texto, bg, fg) = when (estado) {
-        EstadoEntrega.PENDENTE ->
-            Triple("Pendente", ChipYellow, ChipYellowText)
-
-        EstadoEntrega.PRONTA ->
-            Triple("Pronta", ChipBlue, ChipBlueText)
-
-        EstadoEntrega.ENTREGUE ->
-            Triple("Entregue", ChipGreen, ChipGreenText)
-
-        EstadoEntrega.CANCELADA ->
-            Triple("Cancelada", ChipRed, ChipRedText)
-
-        else ->
-            Triple(estado.name, Color.LightGray, Color.DarkGray)
+        EstadoEntrega.PENDENTE -> Triple("Pendente", ChipYellow, ChipYellowText)
+        EstadoEntrega.PRONTA -> Triple("Pronta", ChipBlue, ChipBlueText)
+        EstadoEntrega.ENTREGUE -> Triple("Entregue", ChipGreen, ChipGreenText)
+        EstadoEntrega.CANCELADA -> Triple("Cancelada", ChipRed, ChipRedText)
+        else -> Triple(estado.name, Color.LightGray, Color.DarkGray)
     }
 
     Box(

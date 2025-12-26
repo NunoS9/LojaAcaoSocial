@@ -11,22 +11,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.google.firebase.firestore.FirebaseFirestore
-import com.ipca.sassolidaria.data.model.Pedido
 import com.ipca.sassolidaria.ui.components.BottomBar
-import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
-import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -34,30 +27,16 @@ import java.util.Locale
 fun PedidoDetailsView(
     navController: NavController,
     pedidoId: String,
-    db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    viewModel: PedidoDetailsViewModel = viewModel()
 ) {
-    var state by remember { mutableStateOf<ResultState<Pedido>>(ResultState.Loading) }
+    val state = viewModel.state
+
+    LaunchedEffect(pedidoId) {
+        viewModel.carregarPedido(pedidoId)
+    }
 
     val dateFormat = remember {
         SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-    }
-
-    LaunchedEffect(pedidoId) {
-        try {
-            val snapshot = db.collection(FirestoreCollections.PEDIDOS)
-                .document(pedidoId)
-                .get()
-                .await()
-
-            val pedido = snapshot.toObject(Pedido::class.java)
-            if (pedido != null) {
-                state = ResultState.Success(pedido)
-            } else {
-                state = ResultState.Error("Pedido não encontrado.")
-            }
-        } catch (e: Exception) {
-            state = ResultState.Error(e.message ?: "Erro ao carregar pedido.")
-        }
     }
 
     Scaffold(
@@ -71,9 +50,7 @@ fun PedidoDetailsView(
                 .padding(16.dp)
         ) {
 
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Column(modifier = Modifier.fillMaxSize()) {
 
                 // Top bar
                 Row(
