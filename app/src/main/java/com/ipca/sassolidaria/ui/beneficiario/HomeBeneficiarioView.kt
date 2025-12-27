@@ -43,7 +43,8 @@ fun HomeBeneficiarioView(
                     title = {
                         Text(
                             text = "Home",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -51,7 +52,7 @@ fun HomeBeneficiarioView(
                         scrolledContainerColor = ScreenBg
                     )
                 )
-                Divider(color = DividerColor, thickness = 1.dp)
+                Divider(color = DividerColor, thickness = 2.dp)
             }
         },
         bottomBar = { BottomBar(navController = navController) },

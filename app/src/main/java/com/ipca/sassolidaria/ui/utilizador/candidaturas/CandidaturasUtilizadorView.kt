@@ -46,7 +46,8 @@ fun CandidaturasUtilizadorView(
                     title = {
                         Text(
                             text = "Minhas Candidaturas",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -54,7 +55,7 @@ fun CandidaturasUtilizadorView(
                         scrolledContainerColor = ScreenBg
                     )
                 )
-                Divider(color = DividerColor, thickness = 1.dp)
+                Divider(color = DividerColor, thickness = 2.dp)
             }
         },
         bottomBar = { BottomBar(navController = navController) },

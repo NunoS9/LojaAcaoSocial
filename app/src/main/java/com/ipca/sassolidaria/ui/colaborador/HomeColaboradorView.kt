@@ -29,7 +29,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 private val ScreenBg = Color(0xFFF6F7FB)
-private val DividerColor = Color(0xFFE0E0E0)
+private val DividerColor = Color(0xFF858585)
 private val GreenDark = Color(0xFF004B3C)
 private val AlertBg = Color(0xFFE3F3ED)
 
@@ -55,7 +55,8 @@ fun HomeColaboradorView(
                     title = {
                         Text(
                             text = "Home",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -63,7 +64,7 @@ fun HomeColaboradorView(
                         scrolledContainerColor = ScreenBg
                     )
                 )
-                Divider(color = DividerColor)
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
             }
         },
         bottomBar = { BottomBar(navController = navController) },

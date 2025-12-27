@@ -12,13 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 private val GreenDark = Color(0xFF2E7D32)
 private val ChipBlue = Color(0xFFE0E7FF)
@@ -29,7 +29,9 @@ private val ChipRed = Color(0xFFFFCDD2)
 private val ChipRedText = Color(0xFFC62828)
 private val ChipGreen = Color(0xFFE0F2F1)
 private val ChipGreenText = Color(0xFF2E7D32)
+private val GreenSas = Color(0xFF004B3C)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntregasListView(
     navController: NavController,
@@ -41,95 +43,102 @@ fun EntregasListView(
 
     var showDialog by remember { mutableStateOf(false) }
 
+    val ScreenBg = Color(0xFFF6F7FB)
+    val DividerColor = Color(0xFFB0B0B0)
+
     Scaffold(
-        bottomBar = { BottomBar(navController = navController) }
-    ) { innerPadding ->
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-        ) {
-
-            // Top bar
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Voltar")
-                }
-
-                Text(
-                    text = "Minhas Entregas",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.width(48.dp))
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            when (state) {
-                is ResultState.Loading -> Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator() }
-
-                is ResultState.Error -> Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = state.message,
-                        color = MaterialTheme.colorScheme.error
+            topBar = {
+                Column(modifier = Modifier.background(ScreenBg)) {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                text = "Minhas Entregas",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Voltar")
+                            }
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = ScreenBg
+                        )
                     )
+                    HorizontalDivider(color = DividerColor, thickness = 2.dp)
                 }
+            },
+            bottomBar = {
+                BottomBar(navController = navController)
+            }
+        ) { innerPadding ->
 
-                is ResultState.Success -> {
-                    val entregas = state.data
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            ) {
 
-                    if (entregas.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) { Text("Ainda não existem entregas.") }
-                    } else {
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(entregas) { entrega ->
-                                EntregaCard(
-                                    entrega = entrega,
-                                    onVerDetalhes = {
-                                        showDialog = true
-                                        detalhesVm.carregarItensEntrega(entrega.id)
-                                    }
-                                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                when (state) {
+                    is ResultState.Loading -> Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+
+                    is ResultState.Error -> Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    is ResultState.Success -> {
+                        val entregas = state.data
+
+                        if (entregas.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) { Text("Ainda não existem entregas.") }
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(entregas) { entrega ->
+                                    EntregaCard(
+                                        entrega = entrega,
+                                        onVerDetalhes = {
+                                            showDialog = true
+                                            detalhesVm.carregarItensEntrega(entrega.id)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                ResultState.Idle -> Unit
+                    ResultState.Idle -> Unit
+                }
+            }
+
+            if (showDialog) {
+                EntregaDetalhesDialogView(
+                    detalhesState = detalhesState,
+                    onDismiss = {
+                        showDialog = false
+                        detalhesVm.limparDetalhes()
+                    }
+                )
             }
         }
-
-        if (showDialog) {
-            EntregaDetalhesDialogView(
-                detalhesState = detalhesState,
-                onDismiss = {
-                    showDialog = false
-                    detalhesVm.limparDetalhes()
-                }
-            )
-        }
-    }
 }
 
 @Composable
@@ -185,7 +194,8 @@ private fun EntregaCard(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GreenDark,
                         contentColor = Color.White
-                    )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Ver Detalhes")
                 }

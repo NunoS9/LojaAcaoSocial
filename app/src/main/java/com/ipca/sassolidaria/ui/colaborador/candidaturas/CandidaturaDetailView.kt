@@ -149,7 +149,6 @@ fun CandidaturaDetailView(
                         // Botão Toggle "Mostrar mais"
                         OutlinedButton(
                             onClick = { showMore = !showMore },
-                            modifier = Modifier.align(Alignment.End),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
                         ) {
                             Text(if (showMore) "Mostrar menos" else "Mostrar mais")

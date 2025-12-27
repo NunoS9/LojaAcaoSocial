@@ -40,11 +40,26 @@ fun CandidaturasListView(
         viewModel.carregarCandidaturas()
     }
 
+    val ScreenBg = Color(0xFFF6F7FB)
+    val DividerColor = Color(0xFFB0B0B0)
+
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Candidaturas", fontWeight = FontWeight.Bold) }
-            )
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Candidaturas",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg
+                    )
+                )
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
+            }
         },
         bottomBar = { BottomBar(navController = navController) }
     ) { innerPadding ->
@@ -54,6 +69,7 @@ fun CandidaturasListView(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
+            Spacer(Modifier.height(16.dp))
             // Barra de Pesquisa (Visual)
             OutlinedTextField(
                 value = searchQuery,
@@ -128,13 +144,15 @@ fun CandidaturaCard(candidatura: Candidatura, onDetalhesClick: () -> Unit) {
 
             Spacer(Modifier.height(16.dp))
 
-            OutlinedButton(
+            Button(
                 onClick = onDetalhesClick,
-                modifier = Modifier.align(Alignment.End),
-                border = androidx.compose.foundation.BorderStroke(1.dp, GreenPrimary),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenPrimary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GreenPrimary,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Ver Detalhes")
+                Text("Ver Detalhes", fontWeight = FontWeight.Bold)
             }
         }
     }

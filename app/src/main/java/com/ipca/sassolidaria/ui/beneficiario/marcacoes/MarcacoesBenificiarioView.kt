@@ -34,24 +34,30 @@ fun MarcacoesBeneficiarioView(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Marcações",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
+            Column(modifier = Modifier.background(Color(0xFFF6F7FB))) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Marcações",
+                            style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+
                         )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Voltar"
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color(0xFFF6F7FB)
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
-                        )
-                    }
-                }
-            )
+                )
+                HorizontalDivider(color = Color(0xFFB0B0B0), thickness = 2.dp)
+            }
         },
         bottomBar = { BottomBar(navController = navController) }
     ) { innerPadding ->

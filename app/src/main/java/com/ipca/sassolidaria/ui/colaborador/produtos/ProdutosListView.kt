@@ -45,30 +45,36 @@ fun ProdutosListView(
 
     // filtro atual (null = todos)
     var filtro by remember { mutableStateOf<TipoProduto?>(null) }
+    val ScreenBg = Color(0xFFF6F7FB)
+    val DividerColor = Color(0xFFB0B0B0)
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Gestão de Produtos",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Gestão de Produtos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            navController.navigate(Routes.PRODUTO_CREATE)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Adicionar produto"
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg
                     )
-                },
-                // sem navigationIcon -> sem seta
-                actions = {
-                    IconButton(onClick = {
-                        navController.navigate(Routes.PRODUTO_CREATE)
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Adicionar produto"
-                        )
-                    }
-                }
-            )
+                )
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
+            }
         },
         bottomBar = { BottomBar(navController = navController) }
     ) { innerPadding ->

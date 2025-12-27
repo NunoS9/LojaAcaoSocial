@@ -1,5 +1,6 @@
 package com.ipca.sassolidaria.ui.beneficiario.perfil
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ private val Green = Color(0xFF004B3C)
 private val RedButton = Color(0xFFE57373)
 private val LightGrayLine = Color(0xFFE0E0E0)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilBeneficiarioView(
     viewModel: PerfilBeneficiarioViewModel = viewModel(),
@@ -34,7 +36,28 @@ fun PerfilBeneficiarioView(
     var showPreferenciasDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    Scaffold(bottomBar = bottomBar) { padding ->
+    val ScreenBg = Color(0xFFF6F7FB)
+    val DividerColor = Color(0xFFB0B0B0)
+
+    Scaffold(
+        topBar = {
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Perfil",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg
+                    )
+                )
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
+            }
+        },
+        bottomBar = bottomBar) { padding ->
 
         Column(
             modifier = Modifier

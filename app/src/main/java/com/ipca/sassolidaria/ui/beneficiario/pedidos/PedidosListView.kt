@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,12 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,10 +31,11 @@ import com.ipca.sassolidaria.core.Routes
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.data.model.enums.EstadoPedido
 import com.ipca.sassolidaria.utils.ResultState
-
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 private val GreenDark = Color(0xFF2E7D32)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PedidosListView(
     navController: NavController,
@@ -43,8 +43,42 @@ fun PedidosListView(
 ) {
     val state = viewModel.pedidosState
 
+    val ScreenBg = Color(0xFFF6F7FB)
+    val DividerColor = Color(0xFFB0B0B0)
+
     Scaffold(
-        bottomBar = { BottomBar(navController = navController) }
+        topBar = {
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Pedidos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Voltar")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            navController.navigate(Routes.PEDIDOS_CREATE)
+                        }) {
+                            Icon(Icons.Filled.Add, contentDescription = "Criar pedido")
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg
+                    )
+                )
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
+            }
+        },
+        bottomBar = {
+            BottomBar(navController = navController)
+        }
     ) { innerPadding ->
 
         Column(
@@ -53,30 +87,6 @@ fun PedidosListView(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-
-            // Top bar mockup
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Filled.ArrowBack, contentDescription = "Voltar")
-                }
-
-                Text(
-                    text = "Pedidos",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
-                )
-
-                IconButton(onClick = {
-                    navController.navigate(Routes.PEDIDOS_CREATE)
-                }) {
-                    Icon(Icons.Filled.Add, contentDescription = "Criar pedido")
-                }
-            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -110,8 +120,9 @@ fun PedidosListView(
                             items(pedidos) { pedido ->
                                 PedidoCard(
                                     pedido = pedido,
-                                    {
-                                        navController.navigate("${Routes.PEDIDO_DETAILS_BENEFICIARIO}/${pedido.id}") }
+                                    onClickDetalhes = {
+                                        navController.navigate("${Routes.PEDIDO_DETAILS_BENEFICIARIO}/${pedido.id}")
+                                    }
                                 )
                             }
                         }
@@ -165,14 +176,21 @@ private fun PedidoCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Ver Detalhes",
-                style = MaterialTheme.typography.bodyMedium,
-                color = GreenDark,
-                modifier = Modifier.align(Alignment.End),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = onClickDetalhes,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GreenDark,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Ver Detalhes")
+                }
+            }
         }
     }
 }
