@@ -10,10 +10,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,6 +23,7 @@ import com.ipca.sassolidaria.ui.components.BottomBar
 
 private val ScreenBg = Color(0xFFF6F7FB)
 private val DividerColor = Color(0xFFB0B0B0)
+private val GreenDark = Color(0xFF004B3C)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,18 +37,10 @@ fun NotificacoesBeneficiarioView(
         topBar = {
             Column(modifier = Modifier.background(ScreenBg)) {
                 CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = "Notificações",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-                        )
-                    },
+                    title = { Text("Notificações", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Voltar"
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -71,26 +62,18 @@ fun NotificacoesBeneficiarioView(
                 .background(ScreenBg)
         ) {
             when {
-                state.isLoading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                state.errorMessage != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(state.errorMessage!!, color = Color.Red)
                 }
-
-                state.errorMessage != null -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(state.errorMessage!!, color = Color.Red)
-                    }
-                }
-
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(state.notificacoes) { notif ->
-                            NotificacaoCard(notificacao = notif)
+                        items(state.notificacoes, key = { it.id_notificacao }) { notif ->
+                            NotificacaoCardBenefAtualizada(notificacao = notif)
                         }
                     }
                 }
@@ -100,13 +83,19 @@ fun NotificacoesBeneficiarioView(
 }
 
 @Composable
-private fun NotificacaoCard(notificacao: Notificacao) {
+private fun NotificacaoCardBenefAtualizada(notificacao: Notificacao) {
     val tempo = notificacao.data_envio?.toString() ?: "Agora"
 
     val categoria = when (notificacao.tipo) {
-        TipoNotificacao.CONFIRMACAO -> "Geral"
-        TipoNotificacao.LEMBRETE_ENTREGA -> "Urgente"
-        TipoNotificacao.VALIDADE_PRODUTO -> "Validade"
+        TipoNotificacao.CANDIDATURA_ATUALIZADA -> "Candidatura"
+        TipoNotificacao.NOVA_CANDIDATURA -> "Candidatura"
+        TipoNotificacao.NOVO_PEDIDO -> "Pedido"
+        TipoNotificacao.AGENDAMENTO_ATUALIZADO -> "Agendamento"
+        TipoNotificacao.NOVO_AGENDAMENTO -> "Agendamento"
+        TipoNotificacao.PEDIDO_ATUALIZADO -> "Pedido"
+        TipoNotificacao.ENTREGA_ATUALIZADA -> "Entrega"
+        TipoNotificacao.LEMBRETE_ENTREGA -> "Entrega"
+        TipoNotificacao.GERAL -> "Geral"
     }
 
     Surface(
@@ -116,55 +105,18 @@ private fun NotificacaoCard(notificacao: Notificacao) {
         shadowElevation = 2.dp
     ) {
         Column(Modifier.padding(16.dp)) {
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.NotificationsNone,
-                    contentDescription = null,
-                    tint = Color(0xFF004B3C)
-                )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Outlined.NotificationsNone, contentDescription = null, tint = GreenDark)
                 Spacer(Modifier.width(8.dp))
-
-                Text(
-                    text = categoria,
-                    color = Color(0xFF004B3C),
-                    style = MaterialTheme.typography.bodySmall
-                )
-
+                Text(categoria, color = GreenDark, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.weight(1f))
-
-                Text(
-                    text = tempo,
-                    color = Color(0xFF8A8A8A),
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text(tempo, color = Color(0xFF8A8A8A), style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = notificacao.titulo,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-            )
-
+            Text(notificacao.titulo, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
             Spacer(Modifier.height(4.dp))
-
-            Text(
-                text = notificacao.conteudo,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF6F6F6F)
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = "Ver Detalhes",
-                color = Color(0xFF004B3C),
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
-            )
+            Text(notificacao.conteudo, style = MaterialTheme.typography.bodySmall, color = Color(0xFF6F6F6F))
         }
     }
 }

@@ -9,17 +9,19 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ipca.sassolidaria.data.model.Candidatura
 import com.ipca.sassolidaria.data.model.enums.EstadoCandidatura
 import com.ipca.sassolidaria.data.model.enums.GrauCurso
+import com.ipca.sassolidaria.data.model.enums.TipoNotificacao
 import com.ipca.sassolidaria.data.repository.CandidaturasRepository
+import com.ipca.sassolidaria.data.repository.NotificacoesRepository
 import com.ipca.sassolidaria.utils.ResultState
 import kotlinx.coroutines.launch
 import java.util.Date
 
 class CandidaturaCreateViewModel(
     private val repo: CandidaturasRepository = CandidaturasRepository(),
+    private val notificacoesRepo: NotificacoesRepository = NotificacoesRepository(),
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ViewModel() {
 
-    // Campos do formulário
     var nome by mutableStateOf("")
     var cc by mutableStateOf("")
     var email by mutableStateOf("")
@@ -36,7 +38,6 @@ class CandidaturaCreateViewModel(
     var bolsa by mutableStateOf(false)
     var obsBolsa by mutableStateOf("")
 
-    // Estado do submit
     var submitState by mutableStateOf<ResultState<Unit>>(ResultState.Idle)
         private set
 
@@ -79,12 +80,21 @@ class CandidaturaCreateViewModel(
                     estado = EstadoCandidatura.EM_ANALISE
                 )
 
+                // 1) cria candidatura
                 repo.createCandidatura(candidatura)
+
+                // 2) cria notificação para TODOS os colaboradores (não falha candidatura se falhar notif)
+                runCatching {
+                    notificacoesRepo.notificarTodosColaboradores(
+                        tipo = TipoNotificacao.NOVA_CANDIDATURA,
+                        titulo = "Nova candidatura",
+                        conteudo = "Foi submetida uma nova candidatura por: $nome"
+                    )
+                }
+
                 submitState = ResultState.Success(Unit)
             } catch (e: Exception) {
-                submitState = ResultState.Error(
-                    e.message ?: "Erro ao submeter a candidatura."
-                )
+                submitState = ResultState.Error(e.message ?: "Erro ao submeter a candidatura.")
             }
         }
     }

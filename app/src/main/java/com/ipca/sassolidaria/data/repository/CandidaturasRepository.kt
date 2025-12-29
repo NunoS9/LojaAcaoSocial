@@ -77,28 +77,21 @@ class CandidaturasRepository(
     /**
      * Aprova a candidatura, muda o tipo de utilizador e cria o registo na tabela beneficiarios.
      */
-    suspend fun aprovarCandidaturaEPromoverUser(candidatura: Candidatura) {
+    suspend fun aprovarCandidaturaEPromoverUser(candidatura: Candidatura): String {
         val batch = db.batch()
 
-        // 1. Atualizar estado da Candidatura
-        val candidaturaRef = db.collection(FirestoreCollections.CANDIDATURAS)
+        // 1) update candidatura
+        val candRef = db.collection(FirestoreCollections.CANDIDATURAS)
             .document(candidatura.id_candidatura)
-        batch.update(candidaturaRef, "estado", EstadoCandidatura.APROVADA)
 
-        // 2. Promover o Utilizador a Beneficiário
-        if (candidatura.id_utilizador.isNotBlank()) {
-            val userRef = db.collection(FirestoreCollections.UTILIZADORES)
-                .document(candidatura.id_utilizador)
+        batch.update(candRef, "estado", EstadoCandidatura.APROVADA.name)
 
-            batch.update(userRef, "tipo", UserType.BENEFICIARIO)
-            batch.update(userRef, "is_beneficiario", true)
-        }
+        // 2) criar beneficiário
+        val benRef = db.collection(FirestoreCollections.BENEFICIARIOS).document()
+        val idBeneficiario = benRef.id
 
-        // 3. Criar registo na tabela de Beneficiários
-        val beneficiarioRef = db.collection(FirestoreCollections.BENEFICIARIOS).document()
-
-        val novoBeneficiario = Beneficiario(
-            id_beneficiario = beneficiarioRef.id,
+        val beneficiario = Beneficiario(
+            id_beneficiario = idBeneficiario,
             id_utilizador = candidatura.id_utilizador,
             nome = candidatura.nome,
             numero_estudante = candidatura.num_estudante.toString(),
@@ -108,12 +101,21 @@ class CandidaturasRepository(
             contacto = candidatura.telemovel.toString()
         )
 
-        batch.set(beneficiarioRef, novoBeneficiario)
+        batch.set(benRef, beneficiario)
 
-        // Executar tudo
+        // 3) promover user
+        // (assumo que o docId do user é o uid; se não for, diz-me e ajusto)
+        val userRef = db.collection(FirestoreCollections.UTILIZADORES)
+            .document(candidatura.id_utilizador)
+
+        batch.update(userRef, mapOf(
+            "tipo" to UserType.BENEFICIARIO.name,
+            "is_beneficiario" to true
+        ))
+
         batch.commit().await()
+        return idBeneficiario
     }
-
     /**
      * Apenas rejeita a candidatura.
      */

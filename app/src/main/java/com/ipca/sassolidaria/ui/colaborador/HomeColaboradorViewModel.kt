@@ -13,6 +13,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.data.model.Agendamento
 import com.ipca.sassolidaria.data.model.Beneficiario
 import com.ipca.sassolidaria.data.model.Entrega
+import com.ipca.sassolidaria.data.model.Notificacao
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
@@ -43,10 +44,18 @@ class HomeColaboradorViewModel(
     var entregasState: ResultState<List<EntregaCalendarioUi>> by mutableStateOf(ResultState.Loading)
         private set
 
+    // ----------- ALERTAS VALIDADE -----------
     var unseenAlertasCount by mutableIntStateOf(0)
         private set
 
     var alertasCountLoading by mutableStateOf(true)
+        private set
+
+    // ----------- NOTIFICAÇÕES (badge no botão) -----------
+    var unseenNotificacoesCount by mutableIntStateOf(0)
+        private set
+
+    var notificacoesCountLoading by mutableStateOf(true)
         private set
 
     private val dateTimeFormat = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
@@ -55,7 +64,37 @@ class HomeColaboradorViewModel(
     fun start() {
         carregarEntregasPendentesProntas()
         carregarAlertasUnseenCount()
+        carregarNotificacoesUnseenCount()
     }
+
+    // ----------------- NOTIFICAÇÕES -----------------
+
+    private fun carregarNotificacoesUnseenCount() {
+        viewModelScope.launch {
+            notificacoesCountLoading = true
+            try {
+                val uid = auth.currentUser?.uid ?: run {
+                    unseenNotificacoesCount = 0
+                    notificacoesCountLoading = false
+                    return@launch
+                }
+
+                val snap = db.collection(FirestoreCollections.NOTIFICACOES)
+                    .whereEqualTo("destinatario", uid)
+                    .get()
+                    .await()
+
+                // se não tiveres "lida", vai contar como não lida
+                unseenNotificacoesCount = snap.documents.count { it.getBoolean("lida") != true }
+            } catch (_: Exception) {
+                unseenNotificacoesCount = 0
+            } finally {
+                notificacoesCountLoading = false
+            }
+        }
+    }
+
+    // ----------------- ALERTAS VALIDADE -----------------
 
     private fun agoraMais14Dias(): Date {
         val ms = System.currentTimeMillis() + 14L * 24L * 60L * 60L * 1000L
@@ -101,6 +140,8 @@ class HomeColaboradorViewModel(
             }
         }
     }
+
+    // ----------------- ENTREGAS CALENDÁRIO -----------------
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun carregarEntregasPendentesProntas() {

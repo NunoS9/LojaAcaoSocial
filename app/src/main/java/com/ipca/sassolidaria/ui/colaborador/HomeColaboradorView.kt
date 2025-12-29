@@ -44,6 +44,9 @@ fun HomeColaboradorView(
     val unseenAlerts = viewModel.unseenAlertasCount
     val alertasLoading = viewModel.alertasCountLoading
 
+    val unseenNotifs = viewModel.unseenNotificacoesCount
+    val notifsLoading = viewModel.notificacoesCountLoading
+
     LaunchedEffect(Unit) {
         viewModel.start()
     }
@@ -87,7 +90,7 @@ fun HomeColaboradorView(
                 HomeTopButton(
                     icon = Icons.Outlined.NotificationsNone,
                     label = "Notificações",
-                    badgeCount = null,
+                    badgeCount = if (notifsLoading) null else unseenNotifs,
                     onClick = { navController.navigate(Routes.NOTIFICACOES_COLABORADOR) }
                 )
 
@@ -149,14 +152,13 @@ fun HomeColaboradorView(
                             CalendarioEntregas(
                                 yearMonth = ym,
                                 entregas = entregas,
-                                onDiaClick = { /* opcional: filtrar */ }
+                                onDiaClick = { /* opcional */ }
                             )
                         }
                     }
 
                     Spacer(Modifier.height(12.dp))
 
-                    // Lista por baixo
                     if (entregas.isEmpty()) {
                         Box(
                             modifier = Modifier
@@ -216,7 +218,7 @@ private fun HomeTopButton(
             Spacer(Modifier.weight(1f))
 
             if (badgeCount != null && badgeCount > 0) {
-                Badge(containerColor = Color(0xFF004B3C)) {
+                Badge(containerColor = GreenDark) {
                     Text(badgeCount.toString(), color = Color.White)
                 }
             }

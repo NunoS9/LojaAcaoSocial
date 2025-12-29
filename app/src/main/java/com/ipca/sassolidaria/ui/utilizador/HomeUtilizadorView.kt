@@ -10,18 +10,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.ipca.sassolidaria.core.Routes
-import com.ipca.sassolidaria.core.UserType
 import com.ipca.sassolidaria.data.model.Produto
 import com.ipca.sassolidaria.ui.components.BottomBar
 
@@ -35,24 +33,24 @@ fun HomeUtilizadorView(
     viewModel: HomeUtilizadorViewModel = viewModel()
 ) {
     val state = viewModel.uiState
+    val unseen = viewModel.unseenNotificacoesCount
+    val loadingBadge = viewModel.notificacoesCountLoading
+
+    LaunchedEffect(Unit) {
+        viewModel.carregarNotificacoesUnseenCount()
+    }
 
     Scaffold(
         topBar = {
             Column(modifier = Modifier.background(ScreenBg)) {
                 CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = "Home",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    title = { Text("Home", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = ScreenBg,
                         scrolledContainerColor = ScreenBg
                     )
                 )
-                HorizontalDivider(color = Color(0xFFB0B0B0), thickness = 2.dp)
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
             }
         },
         bottomBar = { BottomBar(navController = navController) },
@@ -79,13 +77,11 @@ fun HomeUtilizadorView(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.NotificationsNone,
-                        contentDescription = "Notificações",
-                        tint = Color(0xFF004B3C)
-                    )
+                    Icon(Icons.Outlined.NotificationsNone, contentDescription = "Notificações", tint = Color(0xFF004B3C))
                     Spacer(Modifier.width(12.dp))
                     Text(
                         text = "Notificações",
@@ -94,6 +90,14 @@ fun HomeUtilizadorView(
                             color = Color(0xFF004B3C)
                         )
                     )
+
+                    Spacer(Modifier.weight(1f))
+
+                    if (!loadingBadge && unseen > 0) {
+                        Badge(containerColor = Color(0xFF004B3C)) {
+                            Text(unseen.toString(), color = Color.White)
+                        }
+                    }
                 }
             }
 
@@ -108,18 +112,10 @@ fun HomeUtilizadorView(
             Spacer(Modifier.height(12.dp))
 
             when {
-                state.isLoading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                state.errorMessage != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(state.errorMessage!!, color = Color.Red)
                 }
-
-                state.errorMessage != null -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(state.errorMessage!!, color = Color.Red)
-                    }
-                }
-
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -145,66 +141,31 @@ private fun ProdutoStockCard(
     val tipoLabel = viewModel.tipoToLabel(item.tipo_produto)
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 90.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 90.dp),
         shape = RoundedCornerShape(8.dp),
         shadowElevation = 2.dp,
         color = Color.White
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFF4F5F7)),
+                modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFF4F5F7)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = "Produto",
-                    tint = Color(0xFF4F4F4F)
-                )
+                Icon(imageVector = icon, contentDescription = "Produto", tint = Color(0xFF4F4F4F))
             }
 
             Spacer(Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.nome,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                )
-
+                Text(item.nome, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
                 Spacer(Modifier.height(4.dp))
-
-                Text(
-                    text = "Quantidade: ${item.quantidade_disponivel}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF6F6F6F)
-                )
-
+                Text("Quantidade: ${item.quantidade_disponivel}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6F6F6F))
                 Spacer(Modifier.height(2.dp))
-
-                Text(
-                    text = "Tipo: $tipoLabel",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF6F6F6F)
-                )
+                Text("Tipo: $tipoLabel", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6F6F6F))
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeUtilizadorPreview() {
-    val nav = rememberNavController()
-    nav.currentBackStackEntry?.savedStateHandle?.set("userType", UserType.UTILIZADOR.name)
-    HomeUtilizadorView(navController = nav)
 }

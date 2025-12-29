@@ -6,5 +6,7 @@ data class ChatMessage(
     val senderTipo: String = "", // BENEFICIARIO | COLABORADOR
     val text: String = "",
     val timestamp: Long = System.currentTimeMillis(),
-    val lidaPeloColaborador: Boolean = false
+
+    val lidaPeloColaborador: Boolean = false,
+    val lidaPeloBeneficiario: Boolean = false
 )

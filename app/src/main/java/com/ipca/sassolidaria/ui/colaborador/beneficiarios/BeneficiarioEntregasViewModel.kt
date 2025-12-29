@@ -12,6 +12,8 @@ import com.ipca.sassolidaria.data.model.Entrega
 import com.ipca.sassolidaria.data.model.ItemEntrega
 import com.ipca.sassolidaria.data.model.Produto
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
+import com.ipca.sassolidaria.data.model.enums.TipoNotificacao
+import com.ipca.sassolidaria.data.repository.NotificacoesRepository
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -33,7 +35,8 @@ data class BeneficiarioEntregasUiState(
 
 class BeneficiarioEntregasViewModel(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val notifRepo: NotificacoesRepository = NotificacoesRepository()
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(BeneficiarioEntregasUiState())
@@ -80,7 +83,6 @@ class BeneficiarioEntregasViewModel(
 
                         _uiState.value = _uiState.value.copy(entregas = enriched, error = null)
                     } catch (ex: Exception) {
-                        // se falhar enrichment, mantém base (página continua usável)
                         _uiState.value = _uiState.value.copy(
                             error = ex.message ?: "Erro ao carregar detalhes das entregas"
                         )
@@ -97,7 +99,6 @@ class BeneficiarioEntregasViewModel(
         val faltamAg = idsAg.filter { !cacheAgendamentoData.containsKey(it) }
 
         if (faltamAg.isNotEmpty()) {
-            // paraleliza os reads que faltam
             val jobs = faltamAg.map { idAg ->
                 viewModelScope.async {
                     val snap = db.collection(FirestoreCollections.AGENDAMENTOS)
@@ -112,8 +113,7 @@ class BeneficiarioEntregasViewModel(
             jobs.awaitAll()
         }
 
-        // --------- 2) Itens de entrega (aqui ainda é 1 query por entrega, mas paralelizada) ---------
-        // (para otimizar ainda mais seria “denormalizar” ou manter subcoleção por entrega)
+        // --------- 2) Itens entrega (paralelo) ---------
         val itensPorEntrega: Map<String, List<ItemEntrega>> = run {
             val jobs = entregas.map { ent ->
                 viewModelScope.async {
@@ -153,7 +153,7 @@ class BeneficiarioEntregasViewModel(
             jobs.awaitAll()
         }
 
-        // --------- 4) Construir UI ---------
+        // --------- 4) UI ---------
         return entregas.map { ent ->
             val dataAg = cacheAgendamentoData[ent.id_agendamento]
 
@@ -227,6 +227,23 @@ class BeneficiarioEntregasViewModel(
                     )
                     null
                 }.await()
+
+                // ✅ 2) Depois da transação: buscar id_beneficiario e criar notificação
+                try {
+                    val entregaSnap = entregaRef.get().await()
+                    val idBeneficiario = entregaSnap.getString("id_beneficiario") ?: ""
+
+                    if (idBeneficiario.isNotBlank()) {
+                        notifRepo.notificarDestinatario(
+                            destinatarioId = idBeneficiario,
+                            tipo = TipoNotificacao.ENTREGA_ATUALIZADA,
+                            titulo = "Entrega entregue",
+                            conteudo = "A sua entrega #$idEntrega foi marcada como entregue."
+                        )
+                    }
+                } catch (_: Exception) {
+                    // não falhar o fluxo principal se a notificação falhar
+                }
 
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message ?: "Erro ao confirmar entrega")

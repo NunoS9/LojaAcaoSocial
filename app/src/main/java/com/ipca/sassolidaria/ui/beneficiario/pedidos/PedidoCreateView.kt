@@ -40,7 +40,6 @@ fun PedidoCreateView(
     var detalhes by remember { mutableStateOf("") }
     val submitState = viewModel.submitState
 
-    // Quando criar com sucesso -> volta para a lista
     LaunchedEffect(submitState) {
         if (submitState is ResultState.Success) {
             navController.popBackStack()
@@ -60,7 +59,6 @@ fun PedidoCreateView(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Top bar
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()

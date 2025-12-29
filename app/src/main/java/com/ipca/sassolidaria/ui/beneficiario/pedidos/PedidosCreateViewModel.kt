@@ -9,6 +9,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.data.model.Pedido
 import com.ipca.sassolidaria.data.model.enums.EstadoPedido
+import com.ipca.sassolidaria.data.model.enums.TipoNotificacao
+import com.ipca.sassolidaria.data.repository.NotificacoesRepository
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
 import kotlinx.coroutines.launch
@@ -17,7 +19,8 @@ import java.util.Date
 
 class PedidoCreateViewModel(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val notifRepo: NotificacoesRepository = NotificacoesRepository()
 ) : ViewModel() {
 
     var submitState by mutableStateOf<ResultState<Unit>>(ResultState.Idle)
@@ -52,9 +55,10 @@ class PedidoCreateViewModel(
                     return@launch
                 }
 
-                // ✅ usar campo id_beneficiario se existir, senão usar o id do documento
                 val idBeneficiario = benefDoc.getString("id_beneficiario") ?: benefDoc.id
+                val nomeBeneficiario = benefDoc.getString("nome") ?: "Beneficiário"
 
+                // ✅ 2) criar pedido
                 val pedido = Pedido(
                     id_pedido = "",
                     id_beneficiario = idBeneficiario,
@@ -69,6 +73,18 @@ class PedidoCreateViewModel(
                     .await()
 
                 docRef.update("id_pedido", docRef.id).await()
+
+                // ✅ 3) notificar TODOS os colaboradores (via "users" tipo == COLABORADOR)
+                // Não rebenta o submit caso falhe (fica alinhado com o comentário do repo).
+                try {
+                    notifRepo.notificarTodosColaboradores(
+                        tipo = TipoNotificacao.NOVO_PEDIDO,
+                        titulo = "Novo pedido",
+                        conteudo = "Novo pedido submetido por $nomeBeneficiario (Pedido #${docRef.id})."
+                    )
+                } catch (_: Exception) {
+                    // ignora: não falhar o fluxo principal
+                }
 
                 submitState = ResultState.Success(Unit)
             } catch (e: Exception) {

@@ -1,22 +1,73 @@
 package com.ipca.sassolidaria.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.ipca.sassolidaria.core.UserType
 import com.ipca.sassolidaria.data.model.Notificacao
+import com.ipca.sassolidaria.data.model.enums.TipoNotificacao
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 class NotificacoesRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    suspend fun getNotificacoesDoUtilizador(userId: String): List<Notificacao> {
-        val snapshot = db.collection(FirestoreCollections.NOTIFICACOES)
-            .whereEqualTo("destinatario", userId) // <-- ajusta o nome do campo se for diferente
-            .orderBy("data", Query.Direction.DESCENDING) // se tiveres campo data
+    suspend fun notificarTodosColaboradores(
+        tipo: TipoNotificacao,
+        titulo: String,
+        conteudo: String
+    ) {
+        val colaboradoresSnap = db.collection(FirestoreCollections.UTILIZADORES) // "users"
+            .whereEqualTo("tipo", UserType.COLABORADOR.name)
             .get()
             .await()
 
-        return snapshot.toObjects(Notificacao::class.java)
+        if (colaboradoresSnap.isEmpty) return
+
+        val batch = db.batch()
+
+        for (doc in colaboradoresSnap.documents) {
+            val destinatarioId = doc.getString("id_utilizador") ?: doc.id
+
+            val notifRef = db.collection(FirestoreCollections.NOTIFICACOES).document()
+
+            val notif = Notificacao(
+                id_notificacao = notifRef.id,
+                destinatario = destinatarioId,
+                tipo = tipo,
+                titulo = titulo,
+                conteudo = conteudo,
+                data_envio = Date(),
+                lida = false
+            )
+
+            batch.set(notifRef, notif)
+        }
+
+        batch.commit().await()
+    }
+
+    /**
+     * ✅ Nova: notificar UM destinatário (pode ser uid do user OU id_beneficiario)
+     */
+    suspend fun notificarDestinatario(
+        destinatarioId: String,
+        tipo: TipoNotificacao,
+        titulo: String,
+        conteudo: String
+    ) {
+        val notifRef = db.collection(FirestoreCollections.NOTIFICACOES).document()
+
+        val notif = Notificacao(
+            id_notificacao = notifRef.id,
+            destinatario = destinatarioId,
+            tipo = tipo,
+            titulo = titulo,
+            conteudo = conteudo,
+            data_envio = Date(),
+            lida = false
+        )
+
+        notifRef.set(notif).await()
     }
 }

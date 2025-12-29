@@ -25,6 +25,7 @@ import com.ipca.sassolidaria.auth.RegisterView
 import com.ipca.sassolidaria.ui.screens.SplashView
 
 import com.ipca.sassolidaria.ui.colaborador.HomeColaboradorView
+import com.ipca.sassolidaria.ui.colaborador.NotificacoesColaboradorView
 import com.ipca.sassolidaria.ui.colaborador.AlertasValidadeView
 import com.ipca.sassolidaria.ui.colaborador.perfil.PerfilColaboradorView
 import com.ipca.sassolidaria.ui.colaborador.candidaturas.CandidaturasListView
@@ -104,6 +105,10 @@ fun AppNavHost() {
         composable(Routes.HOME_COLABORADOR) {
             setUser("COLABORADOR")
             HomeColaboradorView(navController)
+        }
+
+        composable(Routes.NOTIFICACOES_COLABORADOR) {
+            NotificacoesColaboradorView(navController = navController)
         }
 
         composable(Routes.PRODUTOS_LIST) {

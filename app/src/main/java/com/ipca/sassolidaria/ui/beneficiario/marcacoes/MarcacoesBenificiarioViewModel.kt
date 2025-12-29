@@ -5,13 +5,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.data.model.Agendamento
 import com.ipca.sassolidaria.data.model.Entrega
 import com.ipca.sassolidaria.data.model.enums.EstadoAgendamento
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
+import com.ipca.sassolidaria.data.model.enums.TipoNotificacao
 import com.ipca.sassolidaria.data.repository.AgendamentosRepository
 import com.ipca.sassolidaria.data.repository.EntregasRepository
+import com.ipca.sassolidaria.data.repository.NotificacoesRepository
+import com.ipca.sassolidaria.utils.FirestoreCollections
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.Date
 
 data class MarcacoesUiState(
@@ -23,7 +29,10 @@ data class MarcacoesUiState(
 
 class MarcacoesBeneficiarioViewModel(
     private val agRepo: AgendamentosRepository = AgendamentosRepository(),
-    private val entRepo: EntregasRepository = EntregasRepository()
+    private val entRepo: EntregasRepository = EntregasRepository(),
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val notifRepo: NotificacoesRepository = NotificacoesRepository()
 ) : ViewModel() {
 
     var uiState by mutableStateOf(MarcacoesUiState())
@@ -58,32 +67,44 @@ class MarcacoesBeneficiarioViewModel(
     }
 
     fun confirmarAgendamento(agendamento: Agendamento) {
-        // só permite alterar se estiver pendente
         if (agendamento.estado != EstadoAgendamento.PENDENTE) return
 
         viewModelScope.launch {
             try {
+                // ✅ buscar nome do beneficiário (igual ao pedido)
+                val nomeBeneficiario = obterNomeBeneficiarioAtual()
+
                 // 1) Atualizar estado do agendamento
                 agRepo.atualizarEstadoAgendamento(
                     agendamento.id_agendamento,
                     EstadoAgendamento.ACEITE
                 )
 
-                // 2) Criar entrega associada (usa o id_beneficiario do próprio agendamento)
+                // 2) Criar entrega associada
                 val entrega = Entrega(
                     id_entrega = "",
                     tipo = agendamento.tipo,
                     id_beneficiario = agendamento.id_beneficiario,
                     id_agendamento = agendamento.id_agendamento,
-                    id_colaborador = "",          // podes preencher noutro fluxo
+                    id_colaborador = "", // mantém igual ao teu fluxo
                     estado = EstadoEntrega.PENDENTE
                 )
-
                 entRepo.criarEntrega(entrega)
+
+                // ✅ 3) notificar TODOS os colaboradores
+                try {
+                    notifRepo.notificarTodosColaboradores(
+                        tipo = TipoNotificacao.AGENDAMENTO_ATUALIZADO,
+                        titulo = "Agendamento aceite",
+                        conteudo = "$nomeBeneficiario aceitou o agendamento #${agendamento.id_agendamento}."
+                    )
+                } catch (_: Exception) {
+                    // ignora: não falhar o fluxo principal
+                }
 
                 carregarAgendamentos()
             } catch (e: Exception) {
-                uiState = uiState.copy(errorMessage = "Erro ao confirmar agendamento")
+                uiState = uiState.copy(errorMessage = e.message ?: "Erro ao confirmar agendamento")
             }
         }
     }
@@ -93,14 +114,47 @@ class MarcacoesBeneficiarioViewModel(
 
         viewModelScope.launch {
             try {
+                // ✅ buscar nome do beneficiário (igual ao pedido)
+                val nomeBeneficiario = obterNomeBeneficiarioAtual()
+
+                // 1) Atualizar estado
                 agRepo.atualizarEstadoAgendamento(
                     agendamento.id_agendamento,
                     EstadoAgendamento.RECUSADO
                 )
+
+                // ✅ 2) notificar TODOS os colaboradores
+                try {
+                    notifRepo.notificarTodosColaboradores(
+                        tipo = TipoNotificacao.AGENDAMENTO_ATUALIZADO,
+                        titulo = "Agendamento recusado",
+                        conteudo = "$nomeBeneficiario recusou o agendamento #${agendamento.id_agendamento}."
+                    )
+                } catch (_: Exception) {
+                    // ignora: não falhar o fluxo principal
+                }
+
                 carregarAgendamentos()
             } catch (e: Exception) {
-                uiState = uiState.copy(errorMessage = "Erro ao recusar agendamento")
+                uiState = uiState.copy(errorMessage = e.message ?: "Erro ao recusar agendamento")
             }
         }
+    }
+
+    /**
+     * Igual ao PedidoCreateViewModel:
+     * vai a BENEFICIARIOS onde id_utilizador == uid e tenta buscar "nome".
+     */
+    private suspend fun obterNomeBeneficiarioAtual(): String {
+        val uid = auth.currentUser?.uid ?: return "Beneficiário"
+
+        val benefSnapshot = db.collection(FirestoreCollections.BENEFICIARIOS)
+            .whereEqualTo("id_utilizador", uid)
+            .limit(1)
+            .get()
+            .await()
+
+        val benefDoc = benefSnapshot.documents.firstOrNull()
+        return benefDoc?.getString("nome") ?: "Beneficiário"
     }
 }
