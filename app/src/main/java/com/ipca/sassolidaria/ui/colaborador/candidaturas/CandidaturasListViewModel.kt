@@ -29,7 +29,6 @@ class CandidaturasListViewModel(
             try {
                 candidaturas = repo.getCandidaturasPendentes()
             } catch (e: Exception) {
-                // Tratar erro se necessário
                 candidaturas = emptyList()
             } finally {
                 isLoading = false

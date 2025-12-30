@@ -35,7 +35,6 @@ fun CandidaturasListView(
     val candidaturas = viewModel.candidaturas
     var searchQuery by remember { mutableStateOf("") }
 
-    // Atualiza a lista sempre que a tela ganha foco (caso volte do detalhe após aprovar)
     LaunchedEffect(Unit) {
         viewModel.carregarCandidaturas()
     }

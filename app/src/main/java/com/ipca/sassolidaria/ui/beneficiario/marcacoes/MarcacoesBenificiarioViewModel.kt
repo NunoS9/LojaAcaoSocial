@@ -71,7 +71,7 @@ class MarcacoesBeneficiarioViewModel(
 
         viewModelScope.launch {
             try {
-                // ✅ buscar nome do beneficiário (igual ao pedido)
+                // buscar nome do beneficiário
                 val nomeBeneficiario = obterNomeBeneficiarioAtual()
 
                 // 1) Atualizar estado do agendamento
@@ -91,7 +91,7 @@ class MarcacoesBeneficiarioViewModel(
                 )
                 entRepo.criarEntrega(entrega)
 
-                // ✅ 3) notificar TODOS os colaboradores
+                // 3) notificar TODOS os colaboradores
                 try {
                     notifRepo.notificarTodosColaboradores(
                         tipo = TipoNotificacao.AGENDAMENTO_ATUALIZADO,
@@ -99,7 +99,6 @@ class MarcacoesBeneficiarioViewModel(
                         conteudo = "$nomeBeneficiario aceitou o agendamento #${agendamento.id_agendamento}."
                     )
                 } catch (_: Exception) {
-                    // ignora: não falhar o fluxo principal
                 }
 
                 carregarAgendamentos()
@@ -114,7 +113,7 @@ class MarcacoesBeneficiarioViewModel(
 
         viewModelScope.launch {
             try {
-                // ✅ buscar nome do beneficiário (igual ao pedido)
+                //  buscar nome do beneficiário
                 val nomeBeneficiario = obterNomeBeneficiarioAtual()
 
                 // 1) Atualizar estado
@@ -123,7 +122,7 @@ class MarcacoesBeneficiarioViewModel(
                     EstadoAgendamento.RECUSADO
                 )
 
-                // ✅ 2) notificar TODOS os colaboradores
+                // 2) notificar TODOS os colaboradores
                 try {
                     notifRepo.notificarTodosColaboradores(
                         tipo = TipoNotificacao.AGENDAMENTO_ATUALIZADO,
@@ -131,7 +130,6 @@ class MarcacoesBeneficiarioViewModel(
                         conteudo = "$nomeBeneficiario recusou o agendamento #${agendamento.id_agendamento}."
                     )
                 } catch (_: Exception) {
-                    // ignora: não falhar o fluxo principal
                 }
 
                 carregarAgendamentos()
@@ -141,10 +139,6 @@ class MarcacoesBeneficiarioViewModel(
         }
     }
 
-    /**
-     * Igual ao PedidoCreateViewModel:
-     * vai a BENEFICIARIOS onde id_utilizador == uid e tenta buscar "nome".
-     */
     private suspend fun obterNomeBeneficiarioAtual(): String {
         val uid = auth.currentUser?.uid ?: return "Beneficiário"
 

@@ -24,7 +24,6 @@ import com.ipca.sassolidaria.ui.components.BottomBar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// --- COLORS ---
 private val Green = Color(0xFF004B3C)
 private val RedButton = Color(0xFFE57373)
 private val LightGrayLine = Color(0xFFE0E0E0)
@@ -61,7 +60,7 @@ fun PerfilUtilizadorView(
                 HorizontalDivider(color = DividerColor, thickness = 2.dp)
             }
         },
-        bottomBar = { BottomBar(navController = navController) } // ✅ ADICIONADO
+        bottomBar = { BottomBar(navController = navController) }
     ) { padding ->
 
         Column(
@@ -194,9 +193,8 @@ fun PerfilItem(icon: Int, text: String, onClick: () -> Unit) {
     }
 }
 
-// ------------------------------
-//      EDITAR DADOS DIALOG
-// ------------------------------
+// EDITAR DADOS DIALOG
+
 @Composable
 fun EditarDadosDialog(
     nomeInicial: String,

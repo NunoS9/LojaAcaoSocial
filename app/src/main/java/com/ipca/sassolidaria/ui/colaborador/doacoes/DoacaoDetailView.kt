@@ -27,7 +27,7 @@ import com.ipca.sassolidaria.data.model.ItemDoacao
 import java.text.SimpleDateFormat
 import java.util.*
 
-/* ------------------------- CORES ------------------------- */
+
 private val VerdeClaro = Color(0xFFB2E8C8)
 private val RosaUser = Color(0xFFD938A0)
 
@@ -47,7 +47,6 @@ fun DoacaoDetailView(
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
 
-        /* ---------------- TOP BAR ---------------- */
         Row(
             Modifier.fillMaxWidth().height(56.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -66,7 +65,6 @@ fun DoacaoDetailView(
         Divider()
         Spacer(Modifier.height(16.dp))
 
-        /* ---------------- CARD SUPERIOR ---------------- */
         doacao?.let { d ->
             DoacaoHeaderCardFull(
                 idDoacao = d.id_doacao,
@@ -91,7 +89,6 @@ fun DoacaoDetailView(
     }
 }
 
-/* ------------------------- CARD HEADER ------------------------- */
 @Composable
 fun DoacaoHeaderCardFull(
     idDoacao: String,
@@ -157,7 +154,6 @@ fun DoacaoHeaderCardFull(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
 
-                // -------------- ÍCONE DO HEXÁGONO VERDE AQUI ---------------
                 Icon(
                     painter = painterResource(id = R.drawable.ic_produtos),
                     contentDescription = null,
@@ -171,7 +167,6 @@ fun DoacaoHeaderCardFull(
     }
 }
 
-/* ------------------------- ITEM CARD ------------------------- */
 @Composable
 fun ItemDoadoCard(item: ItemDoacao) {
 
@@ -185,7 +180,6 @@ fun ItemDoadoCard(item: ItemDoacao) {
     ) {
         Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
 
-            // -------------- ÍCONE DO HEXÁGONO TAMBÉM AQUI ---------------
             Icon(
                 painter = painterResource(id = R.drawable.ic_produtos),
                 contentDescription = null,

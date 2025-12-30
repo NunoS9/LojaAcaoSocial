@@ -17,7 +17,7 @@ class NotificacoesRepository(
         titulo: String,
         conteudo: String
     ) {
-        val colaboradoresSnap = db.collection(FirestoreCollections.UTILIZADORES) // "users"
+        val colaboradoresSnap = db.collection(FirestoreCollections.UTILIZADORES)
             .whereEqualTo("tipo", UserType.COLABORADOR.name)
             .get()
             .await()
@@ -47,9 +47,6 @@ class NotificacoesRepository(
         batch.commit().await()
     }
 
-    /**
-     * ✅ Nova: notificar UM destinatário (pode ser uid do user OU id_beneficiario)
-     */
     suspend fun notificarDestinatario(
         destinatarioId: String,
         tipo: TipoNotificacao,

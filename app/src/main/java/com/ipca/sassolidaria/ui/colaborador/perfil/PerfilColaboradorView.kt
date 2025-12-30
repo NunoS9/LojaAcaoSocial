@@ -46,7 +46,6 @@ fun PerfilColaboradorView(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
 
-    // VM do relatório (está em ui/colaborador/relatorio)
     val relatorioVm: PerfilColaboradorRelatorioViewModel = viewModel()
 
     var showEditDialog by remember { mutableStateOf(false) }
@@ -134,7 +133,6 @@ fun PerfilColaboradorView(
 
             Divider(color = LightGrayLine)
 
-            // ✅ Abrir dialog do relatório (sem mexer no NavHost)
             PerfilItem(
                 icon = R.drawable.ic_report,
                 text = "Gerar Relatório (PDF)",
@@ -184,7 +182,6 @@ fun PerfilColaboradorView(
         }
     }
 
-    // ---------- DIALOG RELATÓRIO (UI está noutro ficheiro) ----------
     if (showReportDialog) {
         RelatorioDialog(
             initialMonth = selectedMonth,

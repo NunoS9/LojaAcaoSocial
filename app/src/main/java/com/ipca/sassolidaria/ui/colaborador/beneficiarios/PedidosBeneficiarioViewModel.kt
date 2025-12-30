@@ -53,7 +53,6 @@ class PedidosBeneficiarioViewModel(
                         conteudo = "O seu pedido (#$idPedido) foi cancelado pelo colaborador."
                     )
                 } catch (_: Exception) {
-                    // não falha o fluxo principal
                 }
 
                 // 3) refresh

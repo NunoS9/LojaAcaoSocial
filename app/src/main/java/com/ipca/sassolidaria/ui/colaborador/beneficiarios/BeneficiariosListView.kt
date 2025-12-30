@@ -185,7 +185,7 @@ fun BeneficiarioCard(
 @Composable
 fun PreviewBeneficiarioCardEmpty() {
     BeneficiarioCard(
-        beneficiario = Beneficiario(),  // Sem dados
+        beneficiario = Beneficiario(),
         onClick = {}
     )
 }

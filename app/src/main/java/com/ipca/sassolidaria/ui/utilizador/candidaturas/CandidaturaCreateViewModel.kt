@@ -83,7 +83,7 @@ class CandidaturaCreateViewModel(
                 // 1) cria candidatura
                 repo.createCandidatura(candidatura)
 
-                // 2) cria notificação para TODOS os colaboradores (não falha candidatura se falhar notif)
+                // 2) cria notificação para TODOS os colaboradores
                 runCatching {
                     notificacoesRepo.notificarTodosColaboradores(
                         tipo = TipoNotificacao.NOVA_CANDIDATURA,

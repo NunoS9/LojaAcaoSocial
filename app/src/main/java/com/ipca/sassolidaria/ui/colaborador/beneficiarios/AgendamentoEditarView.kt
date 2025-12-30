@@ -185,7 +185,6 @@ fun AgendamentoEditarView(
                 Text(it, color = Color.Red)
             }
 
-            // espaço para o bottom bar
             Spacer(Modifier.height(70.dp))
         }
     }

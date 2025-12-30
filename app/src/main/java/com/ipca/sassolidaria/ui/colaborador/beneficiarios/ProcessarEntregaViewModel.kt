@@ -17,7 +17,7 @@ data class ProcessarEntregaUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val produtos: List<Produto> = emptyList(),
-    val selecoesAtuais: Map<String, Int> = emptyMap() // ✅ itens já guardados da entrega
+    val selecoesAtuais: Map<String, Int> = emptyMap()
 )
 
 class ProcessarEntregaViewModel(
@@ -40,7 +40,7 @@ class ProcessarEntregaViewModel(
                     doc.toObject(Produto::class.java)?.copy(id_produto = doc.id)
                 }
 
-                // 2) Itens já existentes da entrega (se for edição)
+                // 2) Itens já existentes da entrega
                 val itensSnap = db.collection(FirestoreCollections.ITENS_ENTREGA)
                     .whereEqualTo("id_entrega", idEntrega)
                     .get()
@@ -65,13 +65,6 @@ class ProcessarEntregaViewModel(
             }
         }
     }
-
-    /**
-     * ✅ Processar (PENDENTE -> PRONTA) OU editar (PRONTA -> PRONTA)
-     * - apaga itens antigos
-     * - cria novos itens
-     * - coloca estado PRONTA
-     */
     fun processarEntrega(
         idEntrega: String,
         selecoes: Map<String, Int>,

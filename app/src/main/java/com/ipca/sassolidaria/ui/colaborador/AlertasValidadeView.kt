@@ -33,7 +33,7 @@ fun AlertasValidadeView(
 
     LaunchedEffect(Unit) {
         viewModel.start()
-        viewModel.marcarComoVistos() // ✅ entra no ecrã = já “viu”
+        viewModel.marcarComoVistos()
     }
 
     Scaffold(

@@ -52,7 +52,6 @@ class NotificacoesUtilizadorViewModel : ViewModel() {
 
                 uiState = uiState.copy(notificacoes = lista, isLoading = false, errorMessage = null)
 
-                // ✅ marcar todas como lidas
                 marcarTodasComoLidas(uid)
 
             } catch (_: Exception) {

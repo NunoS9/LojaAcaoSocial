@@ -32,7 +32,7 @@ class AgendamentoEditarViewModel(
     var uiState by mutableStateOf(AgendamentoEditarUiState())
         private set
 
-    // ✅ guardamos aqui para não precisares de mudar a View
+
     private var currentBeneficiarioId: String? = null
 
     fun carregar(idBeneficiario: String, idAgendamento: String) {
@@ -50,7 +50,6 @@ class AgendamentoEditarViewModel(
         }
     }
 
-    // ✅ assinatura igual à tua (não mexes na View)
     fun confirmarEdicao(idAgendamento: String, novaData: Date, onOk: () -> Unit) {
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true, error = null)
@@ -65,7 +64,7 @@ class AgendamentoEditarViewModel(
                         val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
                         val dataLabel = sdf.format(novaData)
 
-                        // ⚠️ precisa existir no repo (ver nota abaixo)
+
                         notifRepo.notificarDestinatario(
                             destinatarioId = idBenef,
                             tipo = TipoNotificacao.NOVO_AGENDAMENTO,
@@ -73,7 +72,6 @@ class AgendamentoEditarViewModel(
                             conteudo = "O seu agendamento (#$idAgendamento) foi alterado. Nova data: $dataLabel."
                         )
                     } catch (_: Exception) {
-                        // ignora para não falhar o fluxo principal
                     }
                 }
 

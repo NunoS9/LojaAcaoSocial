@@ -18,8 +18,8 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
-private val PendingDot = Color(0xFFFFC107) // pendente
-private val ReadyDot = Color(0xFF3B82F6)   // pronta
+private val PendingDot = Color(0xFFFFC107)
+private val ReadyDot = Color(0xFF3B82F6)
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

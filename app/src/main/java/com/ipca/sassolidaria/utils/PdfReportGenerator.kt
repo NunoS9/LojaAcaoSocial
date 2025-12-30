@@ -34,7 +34,7 @@ object PdfReportGenerator {
     fun generateAndSave(context: Context, report: ReportData): Uri? {
         val doc = PdfDocument()
 
-        val pageWidth = 595  // A4 approx @72dpi
+        val pageWidth = 595
         val pageHeight = 842
         val margin = 32
 

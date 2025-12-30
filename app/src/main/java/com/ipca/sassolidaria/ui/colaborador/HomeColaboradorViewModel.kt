@@ -51,7 +51,7 @@ class HomeColaboradorViewModel(
     var alertasCountLoading by mutableStateOf(true)
         private set
 
-    // ----------- NOTIFICAÇÕES (badge no botão) -----------
+    // ----------- NOTIFICAÇÕES -----------
     var unseenNotificacoesCount by mutableIntStateOf(0)
         private set
 
@@ -67,7 +67,6 @@ class HomeColaboradorViewModel(
         carregarNotificacoesUnseenCount()
     }
 
-    // ----------------- NOTIFICAÇÕES -----------------
 
     private fun carregarNotificacoesUnseenCount() {
         viewModelScope.launch {
@@ -84,7 +83,6 @@ class HomeColaboradorViewModel(
                     .get()
                     .await()
 
-                // se não tiveres "lida", vai contar como não lida
                 unseenNotificacoesCount = snap.documents.count { it.getBoolean("lida") != true }
             } catch (_: Exception) {
                 unseenNotificacoesCount = 0
@@ -163,13 +161,13 @@ class HomeColaboradorViewModel(
                     return@launch
                 }
 
-                // 2) carregar agendamentos (batch por ids)
+                // 2) carregar agendamentos
                 val agIds = entregas.mapNotNull { it.id_agendamento.takeIf { id -> id.isNotBlank() } }.distinct()
                 val agMap = mutableMapOf<String, Agendamento>()
 
                 for (chunk in agIds.chunked(10)) {
                     val snap = db.collection(FirestoreCollections.AGENDAMENTOS)
-                        .whereIn("id_agendamento", chunk) // se não existir este campo, usa document(id)
+                        .whereIn("id_agendamento", chunk)
                         .get()
                         .await()
 
@@ -179,13 +177,13 @@ class HomeColaboradorViewModel(
                     }
                 }
 
-                // 3) carregar beneficiários (batch por ids)
+                // 3) carregar beneficiários
                 val benIds = entregas.mapNotNull { it.id_beneficiario.takeIf { id -> id.isNotBlank() } }.distinct()
                 val benMap = mutableMapOf<String, Beneficiario>()
 
                 for (chunk in benIds.chunked(10)) {
                     val snap = db.collection(FirestoreCollections.BENEFICIARIOS)
-                        .whereIn("id_beneficiario", chunk) // se não existir este campo, usa document(id)
+                        .whereIn("id_beneficiario", chunk)
                         .get()
                         .await()
 
@@ -240,7 +238,7 @@ class HomeColaboradorViewModel(
                         estadoColorFg = fg
                     )
                 }
-                    // ordena por dia (mais próximo primeiro)
+                    // ordena por dia
                     .sortedBy { it.dia }
 
                 entregasState = ResultState.Success(ui)

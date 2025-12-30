@@ -56,13 +56,13 @@ fun ProcessarEntregaView(
 ) {
     val state = vm.uiState
 
-    // ✅ Carrega produtos + itens já existentes da entrega
+    // Carrega produtos + itens já existentes da entrega
     LaunchedEffect(idEntrega) { vm.carregarTudo(idEntrega) }
 
     var search by remember { mutableStateOf("") }
     var selecoes by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
 
-    // ✅ Preenche seleções quando o VM carregar as seleções atuais (edição)
+    // Preenche seleções quando o VM carregar as seleções atuais
     LaunchedEffect(state.selecoesAtuais) {
         if (state.selecoesAtuais.isNotEmpty() && selecoes.isEmpty()) {
             selecoes = state.selecoesAtuais
@@ -157,7 +157,6 @@ fun ProcessarEntregaView(
                 }
             }
 
-            // Botão fixo no fundo
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp),

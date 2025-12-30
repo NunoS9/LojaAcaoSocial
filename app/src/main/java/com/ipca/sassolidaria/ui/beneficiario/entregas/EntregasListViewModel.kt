@@ -37,7 +37,6 @@ class EntregasListViewModel(
     private val dateTimeFormat = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
     private var listenerRegistration: ListenerRegistration? = null
 
-    // 🚀 cache em memória: idAgendamento -> dataHora formatada
     private val agendamentoCache = mutableMapOf<String, String>()
 
     init {
@@ -99,7 +98,6 @@ class EntregasListViewModel(
                     }
                 }
 
-                // ⚡ primeiro: se já tenho cache, consigo logo desenhar (rápido)
                 val uiRapido = entregas.map { ent ->
                     val idEntrega = ent.id_entrega
                     val dataHora = ent.id_agendamento
@@ -115,7 +113,6 @@ class EntregasListViewModel(
                 }
                 entregasState = ResultState.Success(uiRapido)
 
-                // 🚀 depois: buscar só os agendamentos que faltam e atualizar novamente
                 viewModelScope.launch {
                     try {
                         val agIds = entregas.mapNotNull { it.id_agendamento.takeIf { id -> id.isNotBlank() } }
@@ -139,7 +136,6 @@ class EntregasListViewModel(
                                 }
                             }
 
-                            // Re-montar lista com cache preenchida
                             val uiFinal = entregas.map { ent ->
                                 val idEntrega = ent.id_entrega
                                 val dataHora = ent.id_agendamento
@@ -157,7 +153,6 @@ class EntregasListViewModel(
                             entregasState = ResultState.Success(uiFinal)
                         }
                     } catch (_: Exception) {
-                        // não bloqueia a lista; mantém o que já mostrou
                     }
                 }
             }

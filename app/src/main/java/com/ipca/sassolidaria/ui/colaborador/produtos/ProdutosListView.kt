@@ -38,12 +38,10 @@ fun ProdutosListView(
 ) {
     val state = viewModel.uiState
 
-    // Se voltares do create/edit, garante refresh
     LaunchedEffect(Unit) {
         viewModel.carregarProdutos()
     }
 
-    // filtro atual (null = todos)
     var filtro by remember { mutableStateOf<TipoProduto?>(null) }
     val ScreenBg = Color(0xFFF6F7FB)
     val DividerColor = Color(0xFFB0B0B0)

@@ -83,15 +83,13 @@ class ChatViewModel(
 
                 msgRef.set(msg).await()
 
-                // ✅ Buscar nome do beneficiário (users/{chatId})
+
                 val benefUserDoc = db.collection(FirestoreCollections.UTILIZADORES)
                     .document(chatId)
                     .get()
                     .await()
                 val nomeBenef = benefUserDoc.getString("nome") ?: "Beneficiário"
 
-                // ✅ Se precisar enviar notificação para beneficiário:
-                //     destinatario tem de ser id_beneficiario (porque a tua view filtra por id_beneficiario)
                 suspend fun getIdBeneficiarioByUserUid(userUid: String): String? {
                     val snap = db.collection(FirestoreCollections.BENEFICIARIOS)
                         .whereEqualTo("id_utilizador", userUid)

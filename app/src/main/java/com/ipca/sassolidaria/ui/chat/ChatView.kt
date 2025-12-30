@@ -47,7 +47,7 @@ fun ChatView(
             messages = it
         }
 
-        // ✅ Marcar como lidas conforme o userType
+        // Marcar como lidas conforme o userType
         if (userType == UserType.COLABORADOR) {
             viewModel.marcarMensagensComoLidasColaborador(chatId)
         } else if (userType == UserType.BENEFICIARIO) {

@@ -34,10 +34,10 @@ class CandidaturaDetailViewModel(
 
         viewModelScope.launch {
             try {
-                // ✅ aprova + cria beneficiário + promove user
+                // aprova + cria beneficiário + promove user
                 val idBeneficiarioCriado = repo.aprovarCandidaturaEPromoverUser(itemAtual)
 
-                // ✅ notificação para o BENEFICIÁRIO (destinatario = id_beneficiario)
+                // notificação para o BENEFICIÁRIO (destinatario = id_beneficiario)
                 try {
                     notifRepo.notificarDestinatario(
                         destinatarioId = idBeneficiarioCriado,
@@ -46,7 +46,6 @@ class CandidaturaDetailViewModel(
                         conteudo = "A sua candidatura foi aprovada. A partir de agora já é beneficiário."
                     )
                 } catch (_: Exception) {
-                    // não rebenta o fluxo principal
                 }
 
                 onSuccess()
@@ -61,10 +60,10 @@ class CandidaturaDetailViewModel(
 
         viewModelScope.launch {
             try {
-                // ✅ recusa candidatura
+                // recusa candidatura
                 repo.recusarCandidatura(itemAtual.id_candidatura)
 
-                // ✅ notificação para o UTILIZADOR (destinatario = id_utilizador que submeteu)
+                //  notificação para o UTILIZADOR (destinatario = id_utilizador que submeteu)
                 try {
                     notifRepo.notificarDestinatario(
                         destinatarioId = itemAtual.id_utilizador,
@@ -73,7 +72,6 @@ class CandidaturaDetailViewModel(
                         conteudo = "A sua candidatura foi rejeitada. Pode submeter novamente se necessário."
                     )
                 } catch (_: Exception) {
-                    // não rebenta o fluxo principal
                 }
 
                 onSuccess()

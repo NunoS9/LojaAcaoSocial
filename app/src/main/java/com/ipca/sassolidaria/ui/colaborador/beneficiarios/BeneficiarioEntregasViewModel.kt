@@ -44,7 +44,6 @@ class BeneficiarioEntregasViewModel(
 
     private var listener: ListenerRegistration? = null
 
-    // ✅ caches para não repetir reads
     private val cacheAgendamentoData = mutableMapOf<String, Date?>()
     private val cacheProdutoNome = mutableMapOf<String, String>()
 
@@ -68,14 +67,14 @@ class BeneficiarioEntregasViewModel(
                     doc.toObject(Entrega::class.java)?.copy(id_entrega = doc.id)
                 }
 
-                // ✅ 1) mostra imediatamente (rápido)
+                // 1) mostra imediatamente
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     entregas = entregasBase.map { EntregaUi(entrega = it) },
                     error = null
                 )
 
-                // ✅ 2) enriquecer em paralelo (não bloqueia entrada)
+                // 2) enriquecer em paralelo
                 viewModelScope.launch {
                     try {
                         val enriched = enriquecerEntregas(entregasBase)
@@ -94,7 +93,7 @@ class BeneficiarioEntregasViewModel(
     private suspend fun enriquecerEntregas(entregas: List<Entrega>): List<EntregaUi> {
         if (entregas.isEmpty()) return emptyList()
 
-        // --------- 1) Agendamentos (batch com cache) ---------
+        // 1) Agendamentos
         val idsAg = entregas.map { it.id_agendamento }.distinct().filter { it.isNotBlank() }
         val faltamAg = idsAg.filter { !cacheAgendamentoData.containsKey(it) }
 
@@ -113,7 +112,7 @@ class BeneficiarioEntregasViewModel(
             jobs.awaitAll()
         }
 
-        // --------- 2) Itens entrega (paralelo) ---------
+        // 2) Itens entrega
         val itensPorEntrega: Map<String, List<ItemEntrega>> = run {
             val jobs = entregas.map { ent ->
                 viewModelScope.async {
@@ -130,7 +129,7 @@ class BeneficiarioEntregasViewModel(
             jobs.awaitAll().toMap()
         }
 
-        // --------- 3) Produtos (batch com cache) ---------
+        // 3) Produtos
         val idsProdutos = itensPorEntrega.values.flatten()
             .map { it.id_produto }
             .distinct()
@@ -153,7 +152,7 @@ class BeneficiarioEntregasViewModel(
             jobs.awaitAll()
         }
 
-        // --------- 4) UI ---------
+        // 4) UI
         return entregas.map { ent ->
             val dataAg = cacheAgendamentoData[ent.id_agendamento]
 
@@ -228,7 +227,6 @@ class BeneficiarioEntregasViewModel(
                     null
                 }.await()
 
-                // ✅ 2) Depois da transação: buscar id_beneficiario e criar notificação
                 try {
                     val entregaSnap = entregaRef.get().await()
                     val idBeneficiario = entregaSnap.getString("id_beneficiario") ?: ""
@@ -242,7 +240,6 @@ class BeneficiarioEntregasViewModel(
                         )
                     }
                 } catch (_: Exception) {
-                    // não falhar o fluxo principal se a notificação falhar
                 }
 
             } catch (e: Exception) {

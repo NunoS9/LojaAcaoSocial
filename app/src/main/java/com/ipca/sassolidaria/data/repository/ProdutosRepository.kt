@@ -53,9 +53,6 @@ class ProdutosRepository(
             .await()
     }
 
-    /**
-     * 🔥 FIX: ler todos os produtos (tx.get) antes de fazer tx.update
-     */
     suspend fun debitarStock(itens: List<ItemEntrega>) {
         if (itens.isEmpty()) return
 
@@ -79,7 +76,7 @@ class ProdutosRepository(
                 if (novo < 0) throw IllegalStateException("Stock insuficiente para o produto $idProd")
             }
 
-            // ---------- WRITES ----------
+            // Writes
             porProduto.forEach { (idProd, qtd) ->
                 val ref = refs[idProd]!!
                 val snap = snaps[idProd]!!

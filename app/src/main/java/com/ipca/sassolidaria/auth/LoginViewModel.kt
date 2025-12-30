@@ -33,9 +33,8 @@ class LoginViewModel : ViewModel() {
         uiState = uiState.copy(password = newPass)
     }
 
-    /**
-     * Faz login e devolve o tipo de utilizador
-     */
+    // Faz login e devolve o tipo de utilizador
+
     fun login(onSuccess: (UserType) -> Unit) {
         val email = uiState.email.trim()
         val password = uiState.password.trim()

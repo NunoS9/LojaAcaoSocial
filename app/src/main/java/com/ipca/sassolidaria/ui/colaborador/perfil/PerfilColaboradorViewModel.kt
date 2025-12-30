@@ -33,9 +33,6 @@ class PerfilColaboradorViewModel(
             }
     }
 
-    /**
-     * Atualizar APENAS o nome do utilizador (Firestore)
-     */
     fun updateName(
         newName: String,
         onSuccess: () -> Unit,
@@ -60,9 +57,6 @@ class PerfilColaboradorViewModel(
             }
     }
 
-    /**
-     * Atualizar password (Auth)
-     */
     fun updatePassword(
         currentPassword: String,
         newPassword: String,

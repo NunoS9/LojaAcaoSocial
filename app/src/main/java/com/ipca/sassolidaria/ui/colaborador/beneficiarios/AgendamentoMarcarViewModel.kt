@@ -68,11 +68,9 @@ class AgendamentoMarcarViewModel(
                 // 2) associar ao pedido/apoio
                 when (tipo) {
                     Tipo.PEDIDO -> {
-                        // ref = idPedido
                         pedRepo.aceitarPedidoEAssociarAgendamento(ref, idAg)
                     }
                     Tipo.APOIO -> {
-                        // ref = mes (String)
                         val mes = ref.toIntOrNull() ?: 0
                         apRepo.criarApoio(idBeneficiario, mes, idAg)
                     }
@@ -108,7 +106,6 @@ class AgendamentoMarcarViewModel(
                         conteudo = conteudo
                     )
                 } catch (_: Exception) {
-                    // não falha o fluxo
                 }
 
                 uiState = uiState.copy(isLoading = false)

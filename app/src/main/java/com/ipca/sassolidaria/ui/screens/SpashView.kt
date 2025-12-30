@@ -14,7 +14,6 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashView(onNavigateToLogin: () -> Unit) {
 
-    // Executado ao entrar no Splash
     LaunchedEffect(Unit) {
         delay(2500)   // espera 2.5 segundos
         onNavigateToLogin()

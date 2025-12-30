@@ -100,8 +100,8 @@ class AgendamentosRepository(
                 val lista = snapshot.documents.mapNotNull { doc ->
                     doc.toObject(Agendamento::class.java)?.copy(id_agendamento = doc.id)
                 }
-                    .distinctBy { it.id_agendamento } // ✅ evita duplicados
-                    .sortedByDescending { it.data_agendada ?: Date(0) } // ✅ ordena por data desc
+                    .distinctBy { it.id_agendamento }
+                    .sortedByDescending { it.data_agendada ?: Date(0) }
 
                 onChange(lista)
             }
@@ -121,8 +121,6 @@ class AgendamentosRepository(
             )
             .await()
     }
-
-    // ✅ para ecrã de edição (buscar o agendamento atual)
     suspend fun getAgendamentoById(idAgendamento: String): Agendamento? {
         val snap = db.collection(FirestoreCollections.AGENDAMENTOS)
             .document(idAgendamento)

@@ -56,9 +56,7 @@ class PerfilColaboradorRelatorioViewModel(
 
         viewModelScope.launch {
             try {
-                // -------------------------
                 // 1) Buscar docs base
-                // -------------------------
                 val pedidosDocs = fetchDocsByDate(
                     collection = FirestoreCollections.PEDIDOS,
                     dateField = "data_pedido",
@@ -73,15 +71,12 @@ class PerfilColaboradorRelatorioViewModel(
                     end = end
                 )
 
-                // Entregas: não têm data -> buscar todas (ou um limite alto)
+                // Entregas
                 val entregasDocs = db.collection(FirestoreCollections.ENTREGAS)
                     .get()
                     .await()
                     .documents
 
-                // -------------------------
-                // 2) Linhas (TUDO)
-                // -------------------------
                 val pedidosRows = buildPedidosRowsFromDocs(pedidosDocs)
 
                 // Entregas: aplicar filtro do mês usando data_agendada do agendamento
@@ -89,15 +84,13 @@ class PerfilColaboradorRelatorioViewModel(
 
                 val stockRows = fetchStockRows()
 
-                // -------------------------
                 // 3) Contagens (locais)
-                // -------------------------
                 val counts = Contagens(
                     pedidosPendentes = countEstado(pedidosDocs, "PENDENTE"),
                     pedidosEntregues = countEstado(pedidosDocs, "ENTREGUE"),
                     pedidosCancelados = countEstado(pedidosDocs, "CANCELADO"),
 
-                    // Entregas: contar com base nas linhas filtradas (já respeitam mês/tudo)
+                    // Entregas: contar com base nas linhas filtradas
                     entregasPendentes = entregasRows.count { it.getOrNull(1) == "PENDENTE" },
                     entregasProntas = entregasRows.count { it.getOrNull(1) == "PRONTA" },
                     entregasEntregues = entregasRows.count { it.getOrNull(1) == "ENTREGUE" },
@@ -124,9 +117,6 @@ class PerfilColaboradorRelatorioViewModel(
         }
     }
 
-    // --------------------------------------------------------------------
-    // Fetch genérico: só range por data (sem whereEqualTo + range)
-    // --------------------------------------------------------------------
     private suspend fun fetchDocsByDate(
         collection: String,
         dateField: String,
@@ -143,16 +133,11 @@ class PerfilColaboradorRelatorioViewModel(
         return q.get().await().documents
     }
 
-    // --------------------------------------------------------------------
     // Count local
-    // --------------------------------------------------------------------
     private fun countEstado(docs: List<DocumentSnapshot>, estado: String): Int {
         return docs.count { (it.getString("estado") ?: "") == estado }
     }
 
-    // --------------------------------------------------------------------
-    // Pedidos rows: TUDO do mês / TUDO sem filtro
-    // --------------------------------------------------------------------
     private suspend fun buildPedidosRowsFromDocs(
         docs: List<DocumentSnapshot>
     ): List<List<String>> {
@@ -169,21 +154,16 @@ class PerfilColaboradorRelatorioViewModel(
             val data = d.getTimestamp("data_pedido")?.toDate()
             val dataStr = data?.let { df.format(it) } ?: "—"
 
-            // ✅ sem descrição (como pediste)
             listOf(nome, estado, dataStr)
         }
     }
 
-    // --------------------------------------------------------------------
-    // Entregas rows: TUDO do mês / TUDO sem filtro, baseado no agendamento.data_agendada
-    // --------------------------------------------------------------------
     private suspend fun buildEntregasRowsFromDocs(
         docs: List<DocumentSnapshot>,
         start: Date?,
         end: Date?
     ): List<List<String>> {
 
-        // 1) Enriquecer com data_agendada (para filtrar e ordenar)
         val enriched = docs.map { d ->
             val estado = d.getString("estado") ?: "—"
             val tipo = d.getString("tipo") ?: "—"
@@ -198,7 +178,6 @@ class PerfilColaboradorRelatorioViewModel(
             Triple(dataAgendada, estado, listOf(nomeBen, estado, tipo, agendamentoStr))
         }
 
-        // 2) Filtrar por mês se tiver start/end
         val filtered = if (start != null && end != null) {
             enriched.filter { (dt, _, _) ->
                 dt != null && !dt.before(start) && dt.before(end)
@@ -207,13 +186,12 @@ class PerfilColaboradorRelatorioViewModel(
             enriched
         }
 
-        // 3) Ordenar por data_agendada desc (mais recentes primeiro)
+        // 3) Ordenar por data_agendada desc
         return filtered
             .sortedByDescending { it.first }
             .map { it.third }
     }
 
-    // devolve Date? (para filtrar/ordenar)
     private suspend fun resolveDataAgendadaDate(idAgendamento: String): Date? {
         if (idAgendamento.isBlank()) return null
         if (cacheAgendamentoDate.containsKey(idAgendamento)) return cacheAgendamentoDate[idAgendamento]
@@ -228,9 +206,6 @@ class PerfilColaboradorRelatorioViewModel(
         return dt
     }
 
-    // --------------------------------------------------------------------
-    // Stock rows
-    // --------------------------------------------------------------------
     private suspend fun fetchStockRows(): List<List<String>> {
         val snap = db.collection(FirestoreCollections.PRODUTOS)
             .orderBy("nome", Query.Direction.ASCENDING)
@@ -245,9 +220,6 @@ class PerfilColaboradorRelatorioViewModel(
         }
     }
 
-    // --------------------------------------------------------------------
-    // Nome resolvers
-    // --------------------------------------------------------------------
     private suspend fun resolveNomeFromUserOrBeneficiario(id: String): String {
         if (id.isBlank()) return "—"
         cacheNomeUser[id]?.let { return it }
@@ -268,7 +240,7 @@ class PerfilColaboradorRelatorioViewModel(
             return nomeBen
         }
 
-        // 3) beneficiarios where id_utilizador == id (1 campo -> normalmente não pede índice)
+        // 3) beneficiarios where id_utilizador == id
         val queryBen = db.collection(FirestoreCollections.BENEFICIARIOS)
             .whereEqualTo("id_utilizador", id)
             .limit(1)

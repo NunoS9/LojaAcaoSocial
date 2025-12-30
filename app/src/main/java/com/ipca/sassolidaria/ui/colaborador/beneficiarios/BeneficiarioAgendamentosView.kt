@@ -177,7 +177,6 @@ private fun AgendamentoCardColaborador(
     beneficiarioNome: String,
     onEditarRecusado: () -> Unit
 ) {
-    // ✅ agora inclui hora
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
     val dataTxt = agendamento.data_agendada?.let { sdf.format(it) } ?: "-"
 

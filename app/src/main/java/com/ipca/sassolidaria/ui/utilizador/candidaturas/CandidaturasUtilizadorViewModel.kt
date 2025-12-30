@@ -31,8 +31,6 @@ class CandidaturasUtilizadorViewModel(
         candidaturaState = ResultState.Loading
         listener?.remove()
 
-        // ⚠️ CONFIRMA o nome do campo no Firestore.
-        // Normalmente é "id_utilizador". Se no teu for outro, troca aqui.
         listener = db.collection(FirestoreCollections.CANDIDATURAS)
             .whereEqualTo("id_utilizador", uid)
             .addSnapshotListener { snapshot, e ->

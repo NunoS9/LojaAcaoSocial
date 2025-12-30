@@ -30,16 +30,11 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-/* ---------------------------------------------------------
-   CORES DO MOCKUP
----------------------------------------------------------- */
+
 
 val Verde = Color(0xFF0B5D47)
 val Vermelho = Color(0xFFE53935)
 
-/* ---------------------------------------------------------
-   BOTÕES DO MOCKUP
----------------------------------------------------------- */
 
 @Composable
 fun BotaoAdicionarProduto(onClick: () -> Unit) {
@@ -74,9 +69,6 @@ fun BotaoRegistarDoacao(onClick: () -> Unit) {
     }
 }
 
-/* ---------------------------------------------------------
-   ÍCONES EDITAR & REMOVER
----------------------------------------------------------- */
 
 @Composable
 fun IconEditar(onClick: () -> Unit) {
@@ -92,9 +84,6 @@ fun IconRemover(onClick: () -> Unit) {
     }
 }
 
-/* ---------------------------------------------------------
-   DATE FIELD
----------------------------------------------------------- */
 
 @Composable
 fun DateField(label: String, date: Date?, onDateSelected: (Date) -> Unit) {
@@ -138,9 +127,6 @@ fun DateField(label: String, date: Date?, onDateSelected: (Date) -> Unit) {
     }
 }
 
-/* ---------------------------------------------------------
-   CONFIRM DIALOG (GENÉRICA)
----------------------------------------------------------- */
 
 @Composable
 fun PrettyConfirmDialog(
@@ -165,9 +151,6 @@ fun PrettyConfirmDialog(
     )
 }
 
-/* ---------------------------------------------------------
-   MESSAGE DIALOG (AUTO CLOSE)
----------------------------------------------------------- */
 
 @Composable
 fun PrettyMessageDialog(
@@ -211,9 +194,6 @@ fun PrettyMessageDialog(
     )
 }
 
-/* ---------------------------------------------------------
-   CARD DO PRODUTO
----------------------------------------------------------- */
 
 @Composable
 fun ProdutoDoadoCard(
@@ -247,9 +227,6 @@ fun ProdutoDoadoCard(
     }
 }
 
-/* ---------------------------------------------------------
-   ADD ITEM DIALOG (COMPLETE)
----------------------------------------------------------- */
 
 @Composable
 fun AddItemDialog(
@@ -299,7 +276,6 @@ fun AddItemDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // DROPDOWN M3
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded }
@@ -375,9 +351,6 @@ fun AddItemDialog(
     )
 }
 
-/* ---------------------------------------------------------
-   ECRÃ PRINCIPAL – COMPLETO
----------------------------------------------------------- */
 
 @Composable
 fun DoacaoCreateView(
@@ -565,10 +538,6 @@ fun DoacaoCreateView(
             isError = true
         ) { error = false }
 }
-
-/* ---------------------------------------------------------
-   PREVIEW
----------------------------------------------------------- */
 
 @Preview(showBackground = true)
 @Composable

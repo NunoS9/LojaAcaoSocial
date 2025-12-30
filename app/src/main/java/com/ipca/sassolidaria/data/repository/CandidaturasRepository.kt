@@ -12,13 +12,6 @@ class CandidaturasRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    // ====================================================
-    //  ÁREA DO UTILIZADOR (CRIAR E VER A PRÓPRIA)
-    // ====================================================
-
-    /**
-     * Cria uma nova candidatura.
-     */
     suspend fun createCandidatura(candidatura: Candidatura) {
         val collection = db.collection(FirestoreCollections.CANDIDATURAS)
 
@@ -32,9 +25,6 @@ class CandidaturasRepository(
         docRef.set(candidatura).await()
     }
 
-    /**
-     * Busca a candidatura de um utilizador específico.
-     */
     suspend fun getCandidaturaByUserId(userId: String): Candidatura? {
         if (userId.isBlank()) return null
 
@@ -47,13 +37,6 @@ class CandidaturasRepository(
         return doc.toObject(Candidatura::class.java)
     }
 
-    // ====================================================
-    //  ÁREA DO COLABORADOR (GERIR, DETALHES E APROVAR)
-    // ====================================================
-
-    /**
-     * Busca todas as candidaturas pendentes (EM_ANALISE).
-     */
     suspend fun getCandidaturasPendentes(): List<Candidatura> {
         val snapshot = db.collection(FirestoreCollections.CANDIDATURAS)
             .whereEqualTo("estado", EstadoCandidatura.EM_ANALISE)
@@ -62,10 +45,6 @@ class CandidaturasRepository(
         return snapshot.toObjects(Candidatura::class.java)
     }
 
-    /**
-     * !!! ESTA É A FUNÇÃO QUE ESTAVA A FALTAR !!!
-     * Busca uma candidatura específica pelo ID para mostrar nos detalhes.
-     */
     suspend fun getCandidaturaById(id: String): Candidatura? {
         val doc = db.collection(FirestoreCollections.CANDIDATURAS)
             .document(id)
@@ -74,9 +53,6 @@ class CandidaturasRepository(
         return doc.toObject(Candidatura::class.java)
     }
 
-    /**
-     * Aprova a candidatura, muda o tipo de utilizador e cria o registo na tabela beneficiarios.
-     */
     suspend fun aprovarCandidaturaEPromoverUser(candidatura: Candidatura): String {
         val batch = db.batch()
 
@@ -104,7 +80,6 @@ class CandidaturasRepository(
         batch.set(benRef, beneficiario)
 
         // 3) promover user
-        // (assumo que o docId do user é o uid; se não for, diz-me e ajusto)
         val userRef = db.collection(FirestoreCollections.UTILIZADORES)
             .document(candidatura.id_utilizador)
 
@@ -116,9 +91,6 @@ class CandidaturasRepository(
         batch.commit().await()
         return idBeneficiario
     }
-    /**
-     * Apenas rejeita a candidatura.
-     */
     suspend fun recusarCandidatura(id: String) {
         db.collection(FirestoreCollections.CANDIDATURAS)
             .document(id)

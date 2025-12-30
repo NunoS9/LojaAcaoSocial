@@ -108,7 +108,6 @@ class ProdutoFormViewModel(
 
         val date = parseDateOrNull(uiState.validade)
 
-        // não deixar datas de validade no passado
         if (date != null) {
             val cal = Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, 0)

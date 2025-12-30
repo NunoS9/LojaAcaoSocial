@@ -170,11 +170,9 @@ private fun CandidaturaDetalheCard(
 
 @Composable
 private fun EstadoCandidaturaBadge(estado: EstadoCandidatura) {
-    // ✅ Aqui é onde tu decides o “texto”
-    // Se queres que o utilizador veja “Pendente”, mete “Pendente” em EM_ANALISE.
     val (label, bg, fg, border) = when (estado) {
         EstadoCandidatura.EM_ANALISE -> Quad(
-            "Pendente",               // ou "Em análise" se preferires
+            "Pendente",
             Color(0xFFFFF8E1),
             Color(0xFFF9A825),
             Color(0xFFE6D59E)

@@ -31,7 +31,7 @@ class HomeBeneficiarioViewModel : ViewModel() {
     var uiState by mutableStateOf(HomeBeneficiarioState())
         private set
 
-    // ✅ Badge Notificações
+    // Badge Notificações
     var unseenNotificacoesCount by mutableIntStateOf(0)
         private set
 

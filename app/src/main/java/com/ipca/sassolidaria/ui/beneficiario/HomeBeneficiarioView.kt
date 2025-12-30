@@ -72,7 +72,7 @@ fun HomeBeneficiarioView(
         ) {
             Spacer(Modifier.height(16.dp))
 
-            // ✅ Botão Notificações + badge
+            // Botão Notificações + badge
             Box(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)

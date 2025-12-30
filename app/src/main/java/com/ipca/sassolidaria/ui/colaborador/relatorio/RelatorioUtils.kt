@@ -19,7 +19,6 @@ fun monthNamePt(month: Int): String = when (month) {
     else -> "Mês"
 }
 
-/** Calcula intervalo [start, end) para o mês/ano, ou nulls se allTime. */
 fun calcularIntervaloRelatorio(month: Int, year: Int, allTime: Boolean): Pair<Date?, Date?> {
     if (allTime) return Pair(null, null)
 

@@ -107,7 +107,6 @@ fun BottomBar(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // Ícone + bolha arredondada
                 Box(
                     modifier = Modifier
                         .size(36.dp)

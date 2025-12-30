@@ -20,16 +20,11 @@ class DoacaoCreateViewModel : ViewModel() {
     private val _itens = MutableStateFlow<List<ItemDoacao>>(emptyList())
     val itens: StateFlow<List<ItemDoacao>> = _itens
 
-    /* ---------------------------------------------------------
-       LIMPAR LISTA DE ITENS APÓS REGISTO
-    ---------------------------------------------------------- */
     fun clearItems() {
         _itens.value = emptyList()
     }
 
-    /* ---------------------------------------------------------
-       ADICIONAR ITEM
-    ---------------------------------------------------------- */
+
     fun addItem(item: ItemDoacao) {
         val lista = _itens.value.toMutableList()
         item.id_item_doacao = UUID.randomUUID().toString()
@@ -37,9 +32,7 @@ class DoacaoCreateViewModel : ViewModel() {
         _itens.value = lista
     }
 
-    /* ---------------------------------------------------------
-       EDITAR ITEM
-    ---------------------------------------------------------- */
+
     fun updateItem(oldItem: ItemDoacao, newItem: ItemDoacao) {
         val lista = _itens.value.toMutableList()
         val index = lista.indexOfFirst { it.id_item_doacao == oldItem.id_item_doacao }
@@ -50,16 +43,12 @@ class DoacaoCreateViewModel : ViewModel() {
         }
     }
 
-    /* ---------------------------------------------------------
-       REMOVER ITEM
-    ---------------------------------------------------------- */
+
     fun removeItem(item: ItemDoacao) {
         _itens.value = _itens.value.filter { it.id_item_doacao != item.id_item_doacao }
     }
 
-    /* ---------------------------------------------------------
-       CRIAR DOAÇÃO COMPLETA
-    ---------------------------------------------------------- */
+
     fun criarDoacao(
         nomeDoador: String,
         contacto: String,
@@ -70,7 +59,7 @@ class DoacaoCreateViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
 
-            // 1 ➜ Criar DOADOR
+            // 1 - Criar DOADOR
             val idDoador = db.collection(FirestoreCollections.DOADORES).document().id
 
             val doador = Doador(
@@ -85,7 +74,7 @@ class DoacaoCreateViewModel : ViewModel() {
                 .addOnFailureListener { onError() }
                 .addOnSuccessListener {
 
-                    // 2 ➜ Criar DOAÇÃO
+                    // 2 - Criar DOAÇÃO
                     val idDoacao = db.collection(FirestoreCollections.DOACOES).document().id
 
                     val doacao = Doacao(
@@ -102,7 +91,7 @@ class DoacaoCreateViewModel : ViewModel() {
                         .addOnFailureListener { onError() }
                         .addOnSuccessListener {
 
-                            // 3 ➜ Criar ITENS DA DOAÇÃO
+                            // 3 - Criar ITENS DA DOAÇÃO
                             _itens.value.forEach { item ->
 
                                 val idItem = db.collection(FirestoreCollections.ITENS_DOACAO).document().id
@@ -116,23 +105,20 @@ class DoacaoCreateViewModel : ViewModel() {
                                     .document(idItem)
                                     .set(finalItem)
 
-                                // 4 ➜ Atualizar tabela PRODUTOS
+                                // 4 - Atualizar tabela PRODUTOS
                                 atualizarOuCriarProduto(finalItem)
                             }
 
-                            // 🔥 5 ➜ LIMPAR ITENS APÓS FINALIZAR (RESOLVE O TEU BUG!)
+                            // 5 - LIMPAR ITENS APÓS FINALIZAR
                             clearItems()
 
-                            // 6 ➜ Navegar para o detalhe
+                            // 6 - Navegar para o detalhe
                             onSuccess(idDoacao)
                         }
                 }
         }
     }
 
-    /* ---------------------------------------------------------
-       ATUALIZAR OU CRIAR PRODUTO NO STOCK
-    ---------------------------------------------------------- */
     private fun atualizarOuCriarProduto(item: ItemDoacao) {
 
         val produtosRef = db.collection(FirestoreCollections.PRODUTOS)

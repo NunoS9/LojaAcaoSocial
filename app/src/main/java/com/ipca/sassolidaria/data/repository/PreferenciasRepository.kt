@@ -20,8 +20,6 @@ class PreferenciasRepository(
 
         val d = snap.documents.firstOrNull() ?: return null
 
-        // Guardas "dias" (List<String>) no Firestore, mas o teu model tem "dia_semana:Int".
-        // Vou pegar no 1º dia só para mostrar (podes melhorar depois).
         val dias = d.get("dias") as? List<*> ?: emptyList<Any>()
         val primeiro = dias.firstOrNull() as? String ?: ""
 

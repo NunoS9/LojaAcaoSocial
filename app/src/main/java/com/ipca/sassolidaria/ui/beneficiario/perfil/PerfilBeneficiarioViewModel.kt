@@ -47,7 +47,7 @@ class PerfilBeneficiarioViewModel(
             }
     }
 
-    // ✅ BUSCAR id_beneficiario real a partir da coleção BENEFICIARIOS
+    // BUSCAR id_beneficiario real a partir da coleção BENEFICIARIOS
     private fun loadBeneficiarioId() {
         val uid = auth.currentUser?.uid ?: return
 
@@ -112,7 +112,7 @@ class PerfilBeneficiarioViewModel(
         _uiState.value = _uiState.value.copy(observacoes = txt)
     }
 
-    // ✅ GUARDAR PREFERÊNCIAS COM id_beneficiario (não UID)
+    // GUARDAR PREFERÊNCIAS COM id_beneficiario
     fun guardarPreferencias(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -134,7 +134,7 @@ class PerfilBeneficiarioViewModel(
         )
 
         db.collection(FirestoreCollections.PREFERENCIAS_AGENDAMENTO)
-            .document(idBeneficiario) // ✅ agora é o id_beneficiario
+            .document(idBeneficiario)
             .collection("items")
             .add(data)
             .addOnSuccessListener {

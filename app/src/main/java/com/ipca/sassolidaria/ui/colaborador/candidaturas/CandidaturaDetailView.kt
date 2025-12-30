@@ -121,11 +121,9 @@ fun CandidaturaDetailView(
                         Spacer(Modifier.height(8.dp))
                         InfoRow(Icons.Outlined.Badge, "CC: ${item.cc}")
 
-                        // --- EXPANDIR / MOSTRAR MAIS ---
                         AnimatedVisibility(visible = showMore) {
                             Column(Modifier.padding(top = 8.dp)) {
 
-                                // CORREÇÃO 3: Divider -> HorizontalDivider
                                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
                                 Text("Detalhes Financeiros:", fontWeight = FontWeight.SemiBold)
@@ -164,7 +162,7 @@ fun CandidaturaDetailView(
 
                 Spacer(Modifier.height(24.dp))
 
-                // --- AÇÕES DO COLABORADOR ---
+                // AÇÕES DO COLABORADOR
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),

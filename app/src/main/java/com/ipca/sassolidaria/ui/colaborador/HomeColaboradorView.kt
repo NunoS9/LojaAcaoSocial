@@ -82,7 +82,7 @@ fun HomeColaboradorView(
         ) {
             Spacer(Modifier.height(12.dp))
 
-            // --- BOTÕES: Notificações + Alertas ---
+            // BOTÕES: Notificações + Alertas
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -104,7 +104,6 @@ fun HomeColaboradorView(
 
             Spacer(Modifier.height(16.dp))
 
-            // --- CALENDÁRIO + LISTA ENTREGAS ---
             Text(
                 text = "Entregas",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),

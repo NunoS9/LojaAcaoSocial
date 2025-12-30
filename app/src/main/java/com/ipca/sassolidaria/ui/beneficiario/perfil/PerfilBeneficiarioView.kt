@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ipca.sassolidaria.R
 
-// Mantém as mesmas cores/estilo
 private val Green = Color(0xFF004B3C)
 private val RedButton = Color(0xFFE57373)
 private val LightGrayLine = Color(0xFFE0E0E0)
@@ -101,8 +100,6 @@ fun PerfilBeneficiarioView(
             )
 
             Divider(color = LightGrayLine)
-
-            // ✅ REMOVIDO: item "Alterar Senha"
 
             PerfilItem(
                 icon = R.drawable.ic_calendar,

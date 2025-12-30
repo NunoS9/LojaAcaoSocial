@@ -42,7 +42,6 @@ class PedidoCreateViewModel(
 
         viewModelScope.launch {
             try {
-                // ✅ 1) descobrir o ID do beneficiário através do id_utilizador = uid
                 val benefSnapshot = db.collection(FirestoreCollections.BENEFICIARIOS)
                     .whereEqualTo("id_utilizador", uid)
                     .limit(1)
@@ -58,7 +57,6 @@ class PedidoCreateViewModel(
                 val idBeneficiario = benefDoc.getString("id_beneficiario") ?: benefDoc.id
                 val nomeBeneficiario = benefDoc.getString("nome") ?: "Beneficiário"
 
-                // ✅ 2) criar pedido
                 val pedido = Pedido(
                     id_pedido = "",
                     id_beneficiario = idBeneficiario,
@@ -74,8 +72,6 @@ class PedidoCreateViewModel(
 
                 docRef.update("id_pedido", docRef.id).await()
 
-                // ✅ 3) notificar TODOS os colaboradores (via "users" tipo == COLABORADOR)
-                // Não rebenta o submit caso falhe (fica alinhado com o comentário do repo).
                 try {
                     notifRepo.notificarTodosColaboradores(
                         tipo = TipoNotificacao.NOVO_PEDIDO,
@@ -83,7 +79,6 @@ class PedidoCreateViewModel(
                         conteudo = "Novo pedido submetido por $nomeBeneficiario (Pedido #${docRef.id})."
                     )
                 } catch (_: Exception) {
-                    // ignora: não falhar o fluxo principal
                 }
 
                 submitState = ResultState.Success(Unit)

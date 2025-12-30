@@ -14,8 +14,8 @@ data class BeneficiarioAgendamentosUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val agendamentos: List<Agendamento> = emptyList(),
-    val filtroTipo: Tipo? = null,                  // ✅ novo
-    val filtroEstado: EstadoAgendamento? = null    // ✅ novo
+    val filtroTipo: Tipo? = null,
+    val filtroEstado: EstadoAgendamento? = null
 )
 
 class BeneficiarioAgendamentosViewModel(

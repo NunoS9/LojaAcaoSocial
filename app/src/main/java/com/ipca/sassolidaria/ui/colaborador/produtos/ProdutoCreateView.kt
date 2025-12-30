@@ -71,7 +71,6 @@ fun ProdutoCreateView(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Dropdown Tipo
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,

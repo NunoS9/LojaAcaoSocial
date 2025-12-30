@@ -22,7 +22,6 @@ class EntregaDetalhesViewModel(
     var detalhesState: ResultState<List<String>> by mutableStateOf(ResultState.Idle)
         private set
 
-    // 🚀 cache produtoId -> nome
     private val produtoNomeCache = mutableMapOf<String, String>()
 
     fun carregarItensEntrega(entregaId: String) {
@@ -73,7 +72,7 @@ class EntregaDetalhesViewModel(
                 val idsProdutos = itens.mapNotNull { it.id_produto.takeIf { id -> id.isNotBlank() } }
                     .distinct()
 
-                // 3) buscar nomes dos produtos em batch (só os que não estão em cache)
+                // 3) buscar nomes dos produtos
                 val missing = idsProdutos.filterNot { produtoNomeCache.containsKey(it) }
                 if (missing.isNotEmpty()) {
                     val chunks = missing.chunked(10)
