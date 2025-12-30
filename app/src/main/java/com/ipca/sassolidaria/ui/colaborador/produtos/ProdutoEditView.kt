@@ -1,16 +1,24 @@
 package com.ipca.sassolidaria.ui.colaborador.produtos
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ipca.sassolidaria.data.model.enums.TipoProduto
+
+private val GreenSas = Color(0xFF004B3C)
+private val RedAction = Color(0xFFE57373)
+private val ScreenBg = Color(0xFFF6F7FB)
+private val DividerColor = Color(0xFF858585)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,13 +30,13 @@ fun ProdutoEditView(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = "Editar Produto",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
@@ -38,8 +46,13 @@ fun ProdutoEditView(
                             contentDescription = "Voltar"
                         )
                     }
-                }
-            )
+                },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg
+                    )
+                )
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
+            }
         }
     ) { innerPadding ->
 
@@ -130,30 +143,31 @@ fun ProdutoEditView(
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(50.dp),
                 onClick = {
                     viewModel.guardar {
                         navController.popBackStack()
                     }
-                }
+                },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
             ) {
-                Text("Salvar Alterações")
+                Text("Salvar Alterações", fontWeight = FontWeight.Bold)
             }
 
             OutlinedButton(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = RedAction),
+                shape = RoundedCornerShape(12.dp),
                 onClick = {
                     viewModel.eliminar {
                         navController.popBackStack()
                     }
                 }
             ) {
-                Text("Eliminar Produto")
+                Text("Eliminar Produto", fontWeight = FontWeight.Bold)
             }
         }
     }

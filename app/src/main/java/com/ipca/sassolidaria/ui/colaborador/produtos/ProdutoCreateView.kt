@@ -1,16 +1,23 @@
 package com.ipca.sassolidaria.ui.colaborador.produtos
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ipca.sassolidaria.data.model.enums.TipoProduto
+
+private val GreenSas = Color(0xFF004B3C)
+private val ScreenBg = Color(0xFFF6F7FB)
+private val DividerColor = Color(0xFF858585)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,24 +29,29 @@ fun ProdutoCreateView(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = "Adicionar Produto",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Voltar"
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
-                        )
-                    }
-                }
-            )
+                )
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
+            }
         }
     ) { innerPadding ->
 
@@ -135,9 +147,10 @@ fun ProdutoCreateView(
             ) {
                 OutlinedButton(
                     modifier = Modifier.weight(1f),
-                    onClick = { navController.popBackStack() }
+                    onClick = { navController.popBackStack() },
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Cancelar")
+                    Text("Cancelar", fontWeight = FontWeight.Bold)
                 }
 
                 Button(
@@ -146,9 +159,11 @@ fun ProdutoCreateView(
                         viewModel.guardar {
                             navController.popBackStack()
                         }
-                    }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
                 ) {
-                    Text("Salvar Produto")
+                    Text("Salvar Produto", fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -1,5 +1,7 @@
 package com.ipca.sassolidaria.ui.colaborador.beneficiarios
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,19 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,8 +32,12 @@ import androidx.navigation.NavController
 import com.ipca.sassolidaria.data.model.PreferenciaAgendamento
 import com.ipca.sassolidaria.data.model.enums.Tipo
 import java.util.Calendar
-import java.util.Date
 
+private val GreenSas = Color(0xFF004B3C)
+private val ScreenBg = Color(0xFFF6F7FB)
+private val DividerColor = Color(0xFF858585)
+
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AgendamentoMarcarView(
@@ -62,18 +56,30 @@ fun AgendamentoMarcarView(
     var hora by remember { mutableStateOf("09:00") }
 
     Scaffold(
+        containerColor = ScreenBg,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Agendamento") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
-                    }
-                }
-            )
+            Column(modifier = Modifier.background(ScreenBg)) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "Agendamento",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = ScreenBg
+                    )
+                )
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
+            }
         },
         bottomBar = {
-            // ✅ Botão fixo em baixo
             Button(
                 onClick = {
                     val millis = datePickerState.selectedDateMillis ?: return@Button
@@ -101,12 +107,18 @@ fun AgendamentoMarcarView(
                     .fillMaxWidth()
                     .padding(16.dp)
                     .height(48.dp),
-                enabled = !state.isLoading
+                enabled = !state.isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 if (state.isLoading) {
-                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White
+                    )
                 } else {
-                    Text("Marcar Agendamento")
+                    Text("Marcar Agendamento", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -122,6 +134,7 @@ fun AgendamentoMarcarView(
         ) {
 
             Card(
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(1.dp)
@@ -134,7 +147,7 @@ fun AgendamentoMarcarView(
                     if (p == null) {
                         Text("Sem preferências registadas", color = Color.Gray)
                     } else {
-                        Text("Dia: ${p.dia_semana} (1=Dom..7=Sáb)", color = Color.Gray)
+                        Text("Dia: ${diaSemanaExtenso(p.dia_semana)}", color = Color.Gray)
                         Text("Hora: ${p.hora_inicio} até ${p.hora_fim}", color = Color.Gray)
                         if (p.observacoes.isNotBlank()) Text("Obs: ${p.observacoes}", color = Color.Gray)
                     }
@@ -143,7 +156,6 @@ fun AgendamentoMarcarView(
 
             Text("Marcar", fontWeight = FontWeight.SemiBold)
 
-            // ✅ DatePicker SEM height fixa (evita bug)
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -159,13 +171,31 @@ fun AgendamentoMarcarView(
                 onValueChange = { hora = it },
                 label = { Text("Hora (HH:mm)") },
                 placeholder = { Text("09:00") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = GreenSas
+                )
             )
 
             state.error?.let { Text(it, color = Color.Red) }
 
-            // ✅ espaço para não ficar tapado pelo bottomBar
             Spacer(Modifier.height(70.dp))
         }
+    }
+}
+
+private fun diaSemanaExtenso(dia: Int): String {
+    return when (dia) {
+        1 -> "Domingo"
+        2 -> "Segunda-feira"
+        3 -> "Terça-feira"
+        4 -> "Quarta-feira"
+        5 -> "Quinta-feira"
+        6 -> "Sexta-feira"
+        7 -> "Sábado"
+        else -> "Desconhecido ($dia)"
     }
 }
