@@ -20,7 +20,7 @@ import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
 import androidx.compose.foundation.shape.RoundedCornerShape
 
-private val GreenDark = Color(0xFF2E7D32)
+private val GreenDark = Color(0xFF004B3C)
 private val ChipBlue = Color(0xFFE0E7FF)
 private val ChipBlueText = Color(0xFF1E40AF)
 private val ChipYellow = Color(0xFFFFF3CD)
@@ -56,11 +56,6 @@ fun EntregasListView(
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Voltar")
-                            }
                         },
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                             containerColor = ScreenBg

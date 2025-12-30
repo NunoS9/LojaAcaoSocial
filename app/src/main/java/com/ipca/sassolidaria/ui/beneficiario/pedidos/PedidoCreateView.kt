@@ -30,7 +30,8 @@ import androidx.navigation.NavController
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
 
-private val GreenDark = Color(0xFF2E7D32)
+private val GreenDark = Color(0xFF004B3C)
+
 
 @Composable
 fun PedidoCreateView(

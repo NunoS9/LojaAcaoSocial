@@ -22,7 +22,21 @@ import com.ipca.sassolidaria.data.model.enums.EstadoAgendamento
 import com.ipca.sassolidaria.data.model.enums.Tipo
 import com.ipca.sassolidaria.ui.components.BottomBar
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
+
+private val ScreenBg = Color(0xFFF6F7FB)
+private val DividerColor = Color(0xFFB0B0B0)
+
+private val GreenDark = Color(0xFF004B3C)
+
+// chips (soft)
+private val ChipGreenBg = Color(0xFFE8F5E9)
+private val ChipGreenText = Color(0xFF2E7D32)
+
+private val ChipYellow = Color(0xFFFFF3CD)
+private val ChipYellowText = Color(0xFF8D6E63)
+private val ChipRedBg = Color(0xFFFFCDD2)
+private val ChipRedText = Color(0xFFD32F2F)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,14 +48,13 @@ fun MarcacoesBeneficiarioView(
 
     Scaffold(
         topBar = {
-            Column(modifier = Modifier.background(Color(0xFFF6F7FB))) {
+            Column(modifier = Modifier.background(ScreenBg)) {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
                             text = "Marcações",
                             style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
@@ -53,10 +66,10 @@ fun MarcacoesBeneficiarioView(
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color(0xFFF6F7FB)
+                        containerColor = ScreenBg
                     )
                 )
-                HorizontalDivider(color = Color(0xFFB0B0B0), thickness = 2.dp)
+                HorizontalDivider(color = DividerColor, thickness = 2.dp)
             }
         },
         bottomBar = { BottomBar(navController = navController) }
@@ -66,9 +79,8 @@ fun MarcacoesBeneficiarioView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF6F7FB))
+                .background(ScreenBg)
         ) {
-
             FiltrosMarcacoesRow(
                 filtroAtual = state.filtro,
                 onFiltroChange = { viewModel.alterarFiltro(it) }
@@ -81,9 +93,7 @@ fun MarcacoesBeneficiarioView(
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    ) { CircularProgressIndicator() }
                 }
 
                 state.errorMessage != null -> {
@@ -91,11 +101,10 @@ fun MarcacoesBeneficiarioView(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(state.errorMessage!!, color = Color.Red)
+                        Text(state.errorMessage!!, color = MaterialTheme.colorScheme.error)
                     }
                 }
 
-                // dentro do else de when { ... } na view
                 else -> {
                     val listaFiltrada = state.agendamentos.filter { ag ->
                         state.filtro == null || ag.estado == state.filtro
@@ -105,9 +114,7 @@ fun MarcacoesBeneficiarioView(
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
-                        ) {
-                            Text("Sem marcações para este beneficiário", color = Color.Gray)
-                        }
+                        ) { Text("Sem marcações para este beneficiário", color = Color.Gray) }
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
@@ -124,7 +131,6 @@ fun MarcacoesBeneficiarioView(
                         }
                     }
                 }
-
             }
         }
     }
@@ -141,7 +147,6 @@ private fun FiltrosMarcacoesRow(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
         FilterChip(
             selected = filtroAtual == null,
             onClick = { onFiltroChange(null) },
@@ -174,40 +179,46 @@ private fun MarcacaoCard(
     onConfirmar: () -> Unit,
     onRecusar: () -> Unit
 ) {
-    val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
-    val dataTexto = agendamento.data_agendada?.let { sdf.format(it) } ?: "-"
+    val sdf = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val dataTexto = agendamento.data_agendada?.let { sdf.format(it) } ?: "—"
 
-    val (estadoTexto, estadoCor) = when (agendamento.estado) {
-        EstadoAgendamento.ACEITE -> "Aceite"   to Color(0xFF2E7D32)
-        EstadoAgendamento.RECUSADO -> "Recusado" to Color(0xFFD32F2F)
-        EstadoAgendamento.PENDENTE -> "Pendente" to Color(0xFFF9A825)
+    // chip (igual ideia do teu Triple)
+    val (estadoTexto, estadoBg, estadoFg) = when (agendamento.estado) {
+        EstadoAgendamento.ACEITE ->
+            Triple("Aceite", ChipGreenBg, ChipGreenText)
+
+        EstadoAgendamento.PENDENTE ->
+            Triple("Pendente", ChipYellow, ChipYellowText)
+
+        EstadoAgendamento.RECUSADO ->
+            Triple("Recusado", ChipRedBg, ChipRedText)
+
+        else ->
+            Triple(agendamento.estado.name, Color.LightGray, Color.DarkGray)
     }
 
     val tipoTexto = when (agendamento.tipo) {
         Tipo.PEDIDO -> "Pedido"
-        Tipo.APOIO  -> "Apoio"
+        Tipo.APOIO -> "Apoio"
     }
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-        shape = RoundedCornerShape(8.dp),
-        color = Color.White,
-        shadowElevation = 2.dp
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
 
-            // Linha 1: ID + estado chip
+            // Top row: "Marcação #ID" + chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "ID do Agendamento: #${agendamento.id_agendamento}",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "Marcação #${agendamento.id_agendamento}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(Modifier.weight(1f))
@@ -215,28 +226,30 @@ private fun MarcacaoCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(estadoCor),
-                    contentAlignment = Alignment.Center
+                        .background(estadoBg)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = estadoTexto,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        color = Color.White,
+                        color = estadoFg,
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
+
+            HorizontalDivider(color = Color(0xFFEFEFEF))
+
+            Spacer(Modifier.height(10.dp))
 
             Text(
-                text = "Beneficiário",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                )
+                text = "Detalhes",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(6.dp))
 
             Text(
                 text = "Tipo: $tipoTexto",
@@ -247,27 +260,42 @@ private fun MarcacaoCard(
             Spacer(Modifier.height(2.dp))
 
             Text(
-                text = "Data do Agendamento: $dataTexto",
+                text = "Data do agendamento: $dataTexto",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF6F6F6F)
             )
 
-            // Botões só se estiver pendente
+            // Botões só se pendente (mais bonitos)
             if (agendamento.estado == EstadoAgendamento.PENDENTE) {
+                Spacer(Modifier.height(14.dp))
+                HorizontalDivider(color = Color(0xFFEFEFEF))
                 Spacer(Modifier.height(12.dp))
-
-                Divider(color = Color(0xFFE0E0E0))
-
-                Spacer(Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    TextButton(onClick = onConfirmar) {
+                    Button(
+                        onClick = onConfirmar,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = GreenDark
+                        )
+                    ) {
                         Text("Marcar")
                     }
-                    TextButton(onClick = onRecusar) {
+
+                    Button(
+                        onClick = onRecusar,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = ChipRedText
+                        )
+                    ) {
                         Text("Recusar")
                     }
                 }

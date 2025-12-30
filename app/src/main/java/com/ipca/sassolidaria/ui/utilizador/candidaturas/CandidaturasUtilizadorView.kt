@@ -3,6 +3,8 @@ package com.ipca.sassolidaria.ui.utilizador.candidaturas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -36,7 +38,7 @@ fun CandidaturasUtilizadorView(
     val state = viewModel.candidaturaState
 
     LaunchedEffect(Unit) {
-        viewModel.carregarCandidatura()
+        viewModel.carregarCandidaturas()
     }
 
     Scaffold(
@@ -79,8 +81,7 @@ fun CandidaturasUtilizadorView(
                 .padding(16.dp)
         ) {
             when (state) {
-                is ResultState.Idle,
-                is ResultState.Loading -> {
+                is ResultState.Idle, is ResultState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
@@ -95,45 +96,35 @@ fun CandidaturasUtilizadorView(
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.carregarCandidatura() }) {
+                        Button(onClick = { viewModel.carregarCandidaturas() }) {
                             Text("Tentar novamente")
                         }
                     }
                 }
 
                 is ResultState.Success -> {
-                    val candidatura = state.data
-                    if (candidatura == null) {
-                        SemCandidaturaView(
-                            onCriarCandidatura = { /* opcional */ },
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                    val candidaturas = state.data
+
+                    if (candidaturas.isEmpty()) {
+                        Column(
+                            modifier = Modifier.align(Alignment.Center),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Ainda não submeteu nenhuma candidatura.")
+                        }
                     } else {
-                        CandidaturaDetalheCard(
-                            candidatura = candidatura,
-                            modifier = Modifier.align(Alignment.TopStart)
-                        )
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(candidaturas) { c ->
+                                CandidaturaDetalheCard(candidatura = c)
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SemCandidaturaView(
-    onCriarCandidatura: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Ainda não submeteu nenhuma candidatura.",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
@@ -147,7 +138,7 @@ private fun CandidaturaDetalheCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -162,7 +153,7 @@ private fun CandidaturaDetalheCard(
             Text(text = "Curso: ${candidatura.curso}", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Nº Estudante: ${candidatura.num_estudante}", style = MaterialTheme.typography.bodyMedium)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             EstadoCandidaturaBadge(estado = candidatura.estado)
 
@@ -170,7 +161,8 @@ private fun CandidaturaDetalheCard(
 
             Text(
                 text = "Data de submissão: $dataSubmissao",
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
             )
         }
     }
@@ -178,36 +170,33 @@ private fun CandidaturaDetalheCard(
 
 @Composable
 private fun EstadoCandidaturaBadge(estado: EstadoCandidatura) {
-    val label: String
-    val bg: Color
-    val fg: Color
-    val border: Color
+    // ✅ Aqui é onde tu decides o “texto”
+    // Se queres que o utilizador veja “Pendente”, mete “Pendente” em EM_ANALISE.
+    val (label, bg, fg, border) = when (estado) {
+        EstadoCandidatura.EM_ANALISE -> Quad(
+            "Pendente",               // ou "Em análise" se preferires
+            Color(0xFFFFF8E1),
+            Color(0xFFF9A825),
+            Color(0xFFE6D59E)
+        )
 
-    when (estado) {
-        EstadoCandidatura.EM_ANALISE -> {
-            label = "Em análise"
-            bg = Color(0xFFFFF3CD)
-            fg = Color(0xFF8A6D3B)
-            border = Color(0xFFE6D59E)
-        }
+        EstadoCandidatura.APROVADA -> Quad(
+            "Aprovada",
+            Color(0xFFD4EDDA),
+            Color(0xFF2E7D32),
+            Color(0xFFAED7B7)
+        )
 
-        EstadoCandidatura.APROVADA -> {
-            label = "Aprovada"
-            bg = Color(0xFFD4EDDA)
-            fg = Color(0xFF2E7D32)
-            border = Color(0xFFAED7B7)
-        }
-
-        EstadoCandidatura.REJEITADA -> {
-            label = "Rejeitada"
-            bg = Color(0xFFF8D7DA)
-            fg = Color(0xFFD32F2F)
-            border = Color(0xFFE6B3B8)
-        }
+        EstadoCandidatura.REJEITADA -> Quad(
+            "Rejeitada",
+            Color(0xFFF8D7DA),
+            Color(0xFFD32F2F),
+            Color(0xFFE6B3B8)
+        )
     }
 
     AssistChip(
-        onClick = { /* sem ação */ },
+        onClick = { },
         label = {
             Text(
                 text = label,
@@ -216,10 +205,9 @@ private fun EstadoCandidaturaBadge(estado: EstadoCandidatura) {
                 fontWeight = FontWeight.SemiBold
             )
         },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = bg,
-            labelColor = fg
-        ),
+        colors = AssistChipDefaults.assistChipColors(containerColor = bg, labelColor = fg),
         border = BorderStroke(1.dp, border)
     )
 }
+
+private data class Quad(val a: String, val b: Color, val c: Color, val d: Color)

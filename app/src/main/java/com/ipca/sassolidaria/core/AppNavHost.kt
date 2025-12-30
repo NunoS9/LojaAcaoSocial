@@ -108,6 +108,7 @@ fun AppNavHost() {
         }
 
         composable(Routes.NOTIFICACOES_COLABORADOR) {
+            setUser("COLABORADOR")
             NotificacoesColaboradorView(navController = navController)
         }
 

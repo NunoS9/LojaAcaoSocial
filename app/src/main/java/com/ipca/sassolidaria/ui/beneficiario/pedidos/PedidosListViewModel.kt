@@ -52,7 +52,7 @@ class PedidosListViewModel(
         // Remove listener antigo se existir
         listenerRegistration?.remove()
 
-        // ✅ Agora tudo em coroutine/await (mais "Compose-friendly")
+
         viewModelScope.launch {
             try {
                 val benefSnapshot = db.collection(FirestoreCollections.BENEFICIARIOS)
