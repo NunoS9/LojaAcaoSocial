@@ -35,6 +35,24 @@ class ChatViewModel(
         }
     }
 
+    // ✅ NOVO: título do chat para a TopBar
+    suspend fun getChatTopTitle(chatId: String, userType: UserType): String {
+        return try {
+            if (userType == UserType.COLABORADOR) {
+                val userDoc = db.collection(FirestoreCollections.UTILIZADORES) // "users"
+                    .document(chatId) // chatId = uid do beneficiário
+                    .get()
+                    .await()
+
+                userDoc.getString("nome") ?: "Beneficiário"
+            } else {
+                "Suporte"
+            }
+        } catch (_: Exception) {
+            if (userType == UserType.COLABORADOR) "Beneficiário" else "Suporte"
+        }
+    }
+
     fun listenMessages(
         chatId: String,
         onUpdate: (List<ChatMessage>) -> Unit
@@ -83,7 +101,6 @@ class ChatViewModel(
 
                 msgRef.set(msg).await()
 
-
                 val benefUserDoc = db.collection(FirestoreCollections.UTILIZADORES)
                     .document(chatId)
                     .get()
@@ -116,7 +133,6 @@ class ChatViewModel(
                         }
 
                         UserType.BENEFICIARIO -> {
-                            // nome do beneficiário = o próprio user logado (uid)
                             val myUserDoc = db.collection(FirestoreCollections.UTILIZADORES)
                                 .document(uid)
                                 .get()

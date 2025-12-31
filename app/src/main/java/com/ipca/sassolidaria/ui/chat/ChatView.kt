@@ -37,11 +37,17 @@ fun ChatView(
     var messages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
     var text by remember { mutableStateOf("") }
 
+    // ✅ TÍTULO DINÂMICO
+    var topTitle by remember { mutableStateOf("Suporte") }
+
     val listState = rememberLazyListState()
 
-    /* -------------------- LISTEN + MARK AS READ -------------------- */
-    LaunchedEffect(Unit) {
+    /* -------------------- LISTEN + MARK AS READ + TITLE -------------------- */
+    LaunchedEffect(chatId, userType) {
         viewModel.createChatIfNeeded(chatId)
+
+        // ✅ buscar título (para COLABORADOR: nome do beneficiário)
+        topTitle = viewModel.getChatTopTitle(chatId, userType)
 
         viewModel.listenMessages(chatId) {
             messages = it
@@ -64,7 +70,8 @@ fun ChatView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Suporte") },
+                // ✅ aqui já não é "Suporte"
+                title = { Text(topTitle) },
                 navigationIcon = {
                     IconButton(onClick = { navController?.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")

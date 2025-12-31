@@ -13,8 +13,9 @@ enum class TipoNotificacao {
     NOVO_AGENDAMENTO,
     PEDIDO_ATUALIZADO,
     ENTREGA_ATUALIZADA,
-    LEMBRETE_ENTREGA,
+
 
     // Geral
-    GERAL
+    GERAL,
+    LEMBRETE_ENTREGA,
 }

@@ -13,7 +13,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.data.model.Agendamento
 import com.ipca.sassolidaria.data.model.Beneficiario
 import com.ipca.sassolidaria.data.model.Entrega
-import com.ipca.sassolidaria.data.model.Notificacao
+import com.ipca.sassolidaria.data.model.Produto
 import com.ipca.sassolidaria.data.model.enums.EstadoEntrega
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
@@ -67,7 +67,6 @@ class HomeColaboradorViewModel(
         carregarNotificacoesUnseenCount()
     }
 
-
     private fun carregarNotificacoesUnseenCount() {
         viewModelScope.launch {
             notificacoesCountLoading = true
@@ -112,25 +111,41 @@ class HomeColaboradorViewModel(
                 val now = Date()
                 val limite = agoraMais14Dias()
 
-                // Produtos que expiram <= 14 dias
-                val produtosSnap = db.collection(FirestoreCollections.PRODUTOS)
+                // 1) A EXPIRAR (hoje..+14)
+                val aExpirarSnap = db.collection(FirestoreCollections.PRODUTOS)
                     .whereGreaterThanOrEqualTo("data_validade", now)
                     .whereLessThanOrEqualTo("data_validade", limite)
                     .get()
                     .await()
 
-                val alertIds = produtosSnap.documents.map { it.id }.toSet()
+                val idsAExpirar = aExpirarSnap.documents.map { it.id }
 
-                // Doc de vistos
+                // 2) EXPIRADOS (< hoje) -> filtrar quantidade > 0 em memória (evita index composto)
+                val expiradosSnap = db.collection(FirestoreCollections.PRODUTOS)
+                    .whereLessThan("data_validade", now)
+                    .get()
+                    .await()
+
+                val idsExpiradosComStock = expiradosSnap.documents.mapNotNull { d ->
+                    val p = d.toObject(Produto::class.java) ?: return@mapNotNull null
+                    if (p.quantidade_disponivel > 0) d.id else null
+                }
+
+                // total de IDs que geram alerta
+                val alertIds = (idsAExpirar + idsExpiradosComStock).toSet()
+
+                // 3) Doc de vistos
                 val vistosDoc = db.collection("alertas_validade_vistos")
                     .document(uid)
                     .get()
                     .await()
 
-                val vistosIds = (vistosDoc.get("seen_ids") as? List<*>)?.mapNotNull { it as? String }?.toSet()
-                    ?: emptySet()
+                val vistosIds =
+                    (vistosDoc.get("seen_ids") as? List<*>)?.mapNotNull { it as? String }?.toSet()
+                        ?: emptySet()
 
                 unseenAlertasCount = (alertIds - vistosIds).size
+
             } catch (_: Exception) {
                 unseenAlertasCount = 0
             } finally {
@@ -146,7 +161,6 @@ class HomeColaboradorViewModel(
         viewModelScope.launch {
             entregasState = ResultState.Loading
             try {
-                // 1) buscar entregas com estado PENDENTE ou PRONTA
                 val entregasSnap = db.collection(FirestoreCollections.ENTREGAS)
                     .whereIn("estado", listOf(EstadoEntrega.PENDENTE.name, EstadoEntrega.PRONTA.name))
                     .get()
@@ -161,7 +175,7 @@ class HomeColaboradorViewModel(
                     return@launch
                 }
 
-                // 2) carregar agendamentos
+                // agendamentos
                 val agIds = entregas.mapNotNull { it.id_agendamento.takeIf { id -> id.isNotBlank() } }.distinct()
                 val agMap = mutableMapOf<String, Agendamento>()
 
@@ -177,7 +191,7 @@ class HomeColaboradorViewModel(
                     }
                 }
 
-                // 3) carregar beneficiários
+                // beneficiários
                 val benIds = entregas.mapNotNull { it.id_beneficiario.takeIf { id -> id.isNotBlank() } }.distinct()
                 val benMap = mutableMapOf<String, Beneficiario>()
 
@@ -193,7 +207,6 @@ class HomeColaboradorViewModel(
                     }
                 }
 
-                // 4) map UI
                 val ui = entregas.mapNotNull { ent ->
                     val ag = agMap[ent.id_agendamento]
                     val date = ag?.data_agendada ?: return@mapNotNull null
@@ -237,9 +250,7 @@ class HomeColaboradorViewModel(
                         estadoColorBg = bg,
                         estadoColorFg = fg
                     )
-                }
-                    // ordena por dia
-                    .sortedBy { it.dia }
+                }.sortedBy { it.dia }
 
                 entregasState = ResultState.Success(ui)
             } catch (e: Exception) {

@@ -1,5 +1,6 @@
 package com.ipca.sassolidaria.ui.utilizador.candidaturas
 
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.ipca.sassolidaria.data.model.Candidatura
+import com.ipca.sassolidaria.data.model.DocumentoCandidatura
 import com.ipca.sassolidaria.data.model.enums.EstadoCandidatura
 import com.ipca.sassolidaria.data.model.enums.GrauCurso
 import com.ipca.sassolidaria.data.model.enums.TipoNotificacao
@@ -38,8 +40,24 @@ class CandidaturaCreateViewModel(
     var bolsa by mutableStateOf(false)
     var obsBolsa by mutableStateOf("")
 
+
+    val documentos = mutableStateListOf<DocumentoCandidatura>()
+
     var submitState by mutableStateOf<ResultState<Unit>>(ResultState.Idle)
         private set
+
+    fun adicionarDocumento(doc: DocumentoCandidatura) {
+        documentos.add(doc)
+        limparErros()
+    }
+
+    fun removerDocumento(idDocumentoTemp: String) {
+        documentos.removeAll { it.id_documento == idDocumentoTemp }
+    }
+
+    fun limparDocs() {
+        documentos.clear()
+    }
 
     fun submeterCandidatura() {
         val uid = auth.currentUser?.uid
@@ -50,6 +68,12 @@ class CandidaturaCreateViewModel(
 
         if (nome.isBlank() || email.isBlank() || curso.isBlank()) {
             submitState = ResultState.Error("Preencha os campos obrigatórios.")
+            return
+        }
+
+
+        if (!faes && documentos.isEmpty()) {
+            submitState = ResultState.Error("Tem de anexar pelo menos um documento (ou assinalar FAES).")
             return
         }
 
@@ -80,10 +104,21 @@ class CandidaturaCreateViewModel(
                     estado = EstadoCandidatura.EM_ANALISE
                 )
 
-                // 1) cria candidatura
-                repo.createCandidatura(candidatura)
+                // 1) cria candidatura e obtém id
+                val idCandidatura = repo.createCandidatura(candidatura)
 
-                // 2) cria notificação para TODOS os colaboradores
+                // 2) guarda documentos (se existirem)
+                if (documentos.isNotEmpty()) {
+                    // garante data_upload
+                    val docsComData = documentos.map {
+                        it.copy(
+                            data_upload = it.data_upload ?: Date()
+                        )
+                    }
+                    repo.guardarDocumentosDaCandidatura(idCandidatura, docsComData)
+                }
+
+                // 3) notifica colaboradores
                 runCatching {
                     notificacoesRepo.notificarTodosColaboradores(
                         tipo = TipoNotificacao.NOVA_CANDIDATURA,

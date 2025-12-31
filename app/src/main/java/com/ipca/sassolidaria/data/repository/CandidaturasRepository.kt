@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.core.UserType
 import com.ipca.sassolidaria.data.model.Beneficiario
 import com.ipca.sassolidaria.data.model.Candidatura
+import com.ipca.sassolidaria.data.model.DocumentoCandidatura
 import com.ipca.sassolidaria.data.model.enums.EstadoCandidatura
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import kotlinx.coroutines.tasks.await
@@ -12,7 +13,7 @@ class CandidaturasRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    suspend fun createCandidatura(candidatura: Candidatura) {
+    suspend fun createCandidatura(candidatura: Candidatura): String {
         val collection = db.collection(FirestoreCollections.CANDIDATURAS)
 
         val docRef = if (candidatura.id_candidatura.isBlank()) {
@@ -23,6 +24,42 @@ class CandidaturasRepository(
 
         candidatura.id_candidatura = docRef.id
         docRef.set(candidatura).await()
+        return docRef.id
+    }
+
+    suspend fun guardarDocumentosDaCandidatura(
+        idCandidatura: String,
+        documentos: List<DocumentoCandidatura>
+    ) {
+        if (idCandidatura.isBlank() || documentos.isEmpty()) return
+
+        val candRef = db.collection(FirestoreCollections.CANDIDATURAS).document(idCandidatura)
+        val batch = db.batch()
+
+        documentos.forEach { doc ->
+            val docRef = candRef.collection(FirestoreCollections.DOCUMENTOS_CANDIDATURA).document()
+            doc.id_documento = docRef.id
+            batch.set(docRef, doc)
+        }
+
+        batch.commit().await()
+    }
+
+
+    suspend fun getDocumentosDaCandidatura(idCandidatura: String): List<DocumentoCandidatura> {
+        if (idCandidatura.isBlank()) return emptyList()
+
+        val snap = db.collection(FirestoreCollections.CANDIDATURAS)
+            .document(idCandidatura)
+            .collection(FirestoreCollections.DOCUMENTOS_CANDIDATURA)
+            .get()
+            .await()
+
+        return snap.documents.mapNotNull { doc ->
+            doc.toObject(DocumentoCandidatura::class.java)?.apply {
+                id_documento = doc.id
+            }
+        }
     }
 
     suspend fun getCandidaturaByUserId(userId: String): Candidatura? {
@@ -56,13 +93,11 @@ class CandidaturasRepository(
     suspend fun aprovarCandidaturaEPromoverUser(candidatura: Candidatura): String {
         val batch = db.batch()
 
-        // 1) update candidatura
         val candRef = db.collection(FirestoreCollections.CANDIDATURAS)
             .document(candidatura.id_candidatura)
 
         batch.update(candRef, "estado", EstadoCandidatura.APROVADA.name)
 
-        // 2) criar beneficiário
         val benRef = db.collection(FirestoreCollections.BENEFICIARIOS).document()
         val idBeneficiario = benRef.id
 
@@ -79,22 +114,25 @@ class CandidaturasRepository(
 
         batch.set(benRef, beneficiario)
 
-        // 3) promover user
         val userRef = db.collection(FirestoreCollections.UTILIZADORES)
             .document(candidatura.id_utilizador)
 
-        batch.update(userRef, mapOf(
-            "tipo" to UserType.BENEFICIARIO.name,
-            "is_beneficiario" to true
-        ))
+        batch.update(
+            userRef,
+            mapOf(
+                "tipo" to UserType.BENEFICIARIO.name,
+                "is_beneficiario" to true
+            )
+        )
 
         batch.commit().await()
         return idBeneficiario
     }
+
     suspend fun recusarCandidatura(id: String) {
         db.collection(FirestoreCollections.CANDIDATURAS)
             .document(id)
-            .update("estado", EstadoCandidatura.REJEITADA)
+            .update("estado", EstadoCandidatura.REJEITADA.name)
             .await()
     }
 }

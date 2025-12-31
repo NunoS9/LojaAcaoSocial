@@ -1,32 +1,55 @@
 package com.ipca.sassolidaria.ui.utilizador.candidaturas
 
+import android.content.Context
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.ipca.sassolidaria.data.model.DocumentoCandidatura
 import com.ipca.sassolidaria.data.model.enums.GrauCurso
 import com.ipca.sassolidaria.ui.components.BottomBar
 import com.ipca.sassolidaria.utils.ResultState
+import com.ipca.sassolidaria.utils.uriToBase64
+import java.util.Date
 
 private val GreenDark = Color(0xFF004B3C)
 private val ScreenBg = Color(0xFFF6F7FB)
 private val DividerColor = Color(0xFFB0B0B0)
+
+private const val DOCUMENTOS_INFO = """
+Nota: os candidatos abrangidos pelo Fundo de Apoio de Emergência Social (FAES) dispensam entrega
+de documentos e avaliação da situação socioeconómica.
+
+a) Fotocópia de recibos de despesas permanentes (ex.: despesas referentes a habitação,
+despesas com saúde e/ou transporte) do agregado familiar;
+b) Fotocópia dos 3 últimos recibos de vencimentos/pensões/subsídios/prestações sociais;
+c) Extratos bancários dos 3 últimos meses dos elementos do agregado familiar;
+d) Outros rendimentos recebidos, a qualquer título, pelos elementos do agregado familiar;
+e) No caso de o requerente ser originário de países terceiros (...) deve ser apresentado o título
+de residência e os meios de prova autenticados:
+   i. Comprovativo dos apoios recebidos do Estado do país de origem;
+   ii. Declaração do Município/Poder Local com composição do agregado e condição socioeconómica.
+"""
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,14 +58,39 @@ fun CandidaturaCreateView(
     viewModel: CandidaturaCreateViewModel = viewModel()
 ) {
     val submitState = viewModel.submitState
+    val ctx = LocalContext.current
 
     var dataNascimento by remember { mutableStateOf("") }
-    var selectedFileName by remember { mutableStateOf<String?>(null) }
 
-    val documentPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        selectedFileName = uri?.lastPathSegment
+
+    var showInfo by remember { mutableStateOf(false) }
+
+
+    val docsPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isNullOrEmpty()) return@rememberLauncherForActivityResult
+
+        uris.forEach { uri ->
+            runCatching {
+                val nome = getFileName(ctx, uri) ?: (uri.lastPathSegment ?: "documento")
+                val mime = ctx.contentResolver.getType(uri) ?: "application/octet-stream"
+                val base64 = uriToBase64(ctx, uri)
+
+
+                val tempId = "${System.currentTimeMillis()}_${nome.hashCode()}"
+
+                viewModel.adicionarDocumento(
+                    DocumentoCandidatura(
+                        id_documento = tempId,
+                        nome = nome,
+                        tipoMime = mime,
+                        base64 = base64,
+                        data_upload = Date()
+                    )
+                )
+            }
+        }
     }
 
     LaunchedEffect(submitState) {
@@ -104,11 +152,7 @@ fun CandidaturaCreateView(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text(
-                text = "Identificação do candidato",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Identificação do candidato", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
 
             OutlinedTextField(
                 value = viewModel.nome,
@@ -120,10 +164,7 @@ fun CandidaturaCreateView(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = dataNascimento,
                     onValueChange = { dataNascimento = it },
@@ -141,10 +182,7 @@ fun CandidaturaCreateView(
                 )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = viewModel.telemovel,
                     onValueChange = {
@@ -165,11 +203,7 @@ fun CandidaturaCreateView(
                 )
             }
 
-            Text(
-                text = "Dados académicos",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Dados académicos", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -199,10 +233,7 @@ fun CandidaturaCreateView(
                 )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = viewModel.curso,
                     onValueChange = {
@@ -223,47 +254,28 @@ fun CandidaturaCreateView(
                 )
             }
 
-            Text(
-                text = "Tipologia do pedido",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Tipologia do pedido", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                ApoioCheckbox(
-                    label = "Produtos alimentares",
-                    checked = viewModel.apoioAlimentacao,
-                    onCheckedChange = { viewModel.apoioAlimentacao = it }
-                )
-                ApoioCheckbox(
-                    label = "Produtos de higiene pessoal",
-                    checked = viewModel.apoioHigiene,
-                    onCheckedChange = { viewModel.apoioHigiene = it }
-                )
-                ApoioCheckbox(
-                    label = "Produtos de limpeza",
-                    checked = viewModel.apoioLimpeza,
-                    onCheckedChange = { viewModel.apoioLimpeza = it }
-                )
+                ApoioCheckbox("Produtos alimentares", viewModel.apoioAlimentacao) { viewModel.apoioAlimentacao = it }
+                ApoioCheckbox("Produtos de higiene pessoal", viewModel.apoioHigiene) { viewModel.apoioHigiene = it }
+                ApoioCheckbox("Produtos de limpeza", viewModel.apoioLimpeza) { viewModel.apoioLimpeza = it }
             }
 
-            Text(
-                text = "Outros apoios",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Outros apoios", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
 
             ApoioCheckbox(
                 label = "É apoiado(a) pelo Fundo de Apoio de Emergência Social (FAES)?",
-                checked = viewModel.faes,
-                onCheckedChange = { viewModel.faes = it }
-            )
+                checked = viewModel.faes
+            ) {
+                viewModel.faes = it
+                if (it) viewModel.limparDocs()
+            }
 
             ApoioCheckbox(
                 label = "É beneficiário(a) de alguma bolsa de estudo ou apoio?",
-                checked = viewModel.bolsa,
-                onCheckedChange = { viewModel.bolsa = it }
-            )
+                checked = viewModel.bolsa
+            ) { viewModel.bolsa = it }
 
             if (viewModel.bolsa) {
                 OutlinedTextField(
@@ -274,55 +286,108 @@ fun CandidaturaCreateView(
                 )
             }
 
-            Text(
-                text = "Upload de documentos",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Button(
-                onClick = { documentPickerLauncher.launch("*/*") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = GreenDark
+            // ---------------------- UPLOAD + INFO ----------------------
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Upload de documentos",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
-            ) {
-                Text("Arraste e solte ou clique para fazer upload")
+
+                IconButton(onClick = { showInfo = !showInfo }) {
+                    Icon(Icons.Outlined.Info, contentDescription = "Info", tint = GreenDark)
+                }
             }
 
-            if (selectedFileName != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
+            if (showInfo) {
+                Surface(
+                    color = Color.White,
+                    shadowElevation = 2.dp,
+                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Description,
-                            contentDescription = "Documento",
-                            tint = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = selectedFileName ?: "",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
                     Text(
-                        text = "Remover",
-                        color = Color.Red,
-                        modifier = Modifier
-                            .clickable { selectedFileName = null }
-                            .padding(start = 8.dp)
+                        text = DOCUMENTOS_INFO.trim(),
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF444444)
                     )
                 }
             }
 
+            if (viewModel.faes) {
+                Surface(
+                    color = Color(0xFFE3F3ED),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "FAES ativo: dispensa entrega de documentos.",
+                        modifier = Modifier.padding(12.dp),
+                        color = GreenDark,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Button(
+                onClick = { docsPickerLauncher.launch(arrayOf("*/*")) },
+                enabled = !viewModel.faes,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = GreenDark,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = Color.Gray
+                )
+            ) {
+                Text(if (viewModel.faes) "Upload desativado (FAES)" else "Clique para selecionar documentos (vários)")
+            }
+
+            // Lista dos documentos escolhidos
+            if (viewModel.documentos.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    viewModel.documentos.forEach { doc ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.White,
+                            shadowElevation = 1.dp
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth().padding(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Outlined.Description, contentDescription = "Documento", tint = Color.Gray)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = doc.nome,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                Text(
+                                    text = "Remover",
+                                    color = Color.Red,
+                                    modifier = Modifier
+                                        .clickable { viewModel.removerDocumento(doc.id_documento) }
+                                        .padding(start = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Erros
             if (submitState is ResultState.Error) {
                 Text(
                     text = submitState.message,
@@ -345,9 +410,7 @@ fun CandidaturaCreateView(
                 if (submitState is ResultState.Loading) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(end = 8.dp),
+                            modifier = Modifier.size(18.dp).padding(end = 8.dp),
                             strokeWidth = 2.dp,
                             color = Color.White
                         )
@@ -361,6 +424,8 @@ fun CandidaturaCreateView(
     }
 }
 
+// ---------------------- UI helpers ----------------------
+
 @Composable
 private fun ApoioCheckbox(
     label: String,
@@ -368,10 +433,7 @@ private fun ApoioCheckbox(
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
         Spacer(modifier = Modifier.width(6.dp))
         Text(text = label)
     }
@@ -384,10 +446,7 @@ private fun GrauCheckbox(
     onSelected: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
         Checkbox(
             checked = selected,
             onCheckedChange = { onSelected() },
@@ -395,5 +454,18 @@ private fun GrauCheckbox(
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(text = label)
+    }
+}
+
+
+private fun getFileName(context: Context, uri: Uri): String? {
+    val cr = context.contentResolver
+    val cursor = cr.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+        ?: return null
+
+    return cursor.use {
+        if (!it.moveToFirst()) return null
+        val index = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+        if (index >= 0) it.getString(index) else null
     }
 }

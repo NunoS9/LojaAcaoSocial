@@ -1,7 +1,6 @@
 package com.ipca.sassolidaria.ui.colaborador.perfil
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,35 +53,6 @@ class PerfilColaboradorViewModel(
             }
             .addOnFailureListener {
                 onError("Erro ao atualizar nome.")
-            }
-    }
-
-    fun updatePassword(
-        currentPassword: String,
-        newPassword: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        if (currentPassword.isBlank() || newPassword.isBlank()) {
-            onError("Preencha todos os campos.")
-            return
-        }
-
-        val user = auth.currentUser ?: return onError("Sessão expirada.")
-        val email = user.email ?: return onError("Email não encontrado.")
-
-        val credential = EmailAuthProvider.getCredential(email, currentPassword)
-
-        user.reauthenticate(credential)
-            .addOnSuccessListener {
-                user.updatePassword(newPassword)
-                    .addOnSuccessListener { onSuccess() }
-                    .addOnFailureListener {
-                        onError("Erro ao atualizar palavra-passe: ${it.message}")
-                    }
-            }
-            .addOnFailureListener {
-                onError("Password atual incorreta.")
             }
     }
 }

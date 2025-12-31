@@ -1,6 +1,5 @@
 package com.ipca.sassolidaria.ui.colaborador.perfil
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,24 +9,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ipca.sassolidaria.R
 import com.ipca.sassolidaria.ui.colaborador.relatorio.PerfilColaboradorRelatorioViewModel
-import com.ipca.sassolidaria.ui.colaborador.relatorio.RelatorioDialog
-import com.ipca.sassolidaria.ui.colaborador.relatorio.calcularIntervaloRelatorio
-import com.ipca.sassolidaria.ui.colaborador.relatorio.monthNamePt
-import com.ipca.sassolidaria.utils.PdfReportGenerator
-import com.ipca.sassolidaria.utils.ResultState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.util.Date
 
 private val ScreenBg = Color(0xFFF6F7FB)
 private val DividerColor = Color(0xFFB0B0B0)
@@ -43,20 +32,19 @@ fun PerfilColaboradorView(
     bottomBar: @Composable () -> Unit = {},
     suporteSlot: @Composable () -> Unit = {}
 ) {
-    val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
 
+    // Relatório VM
     val relatorioVm: PerfilColaboradorRelatorioViewModel = viewModel()
 
     var showEditDialog by remember { mutableStateOf(false) }
-    var showPasswordDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+
+    var showReportDialog by remember { mutableStateOf(false) }
     var generatingReport by remember { mutableStateOf(false) }
     var reportError by remember { mutableStateOf<String?>(null) }
 
-    // popup mês/ano
-    var showReportDialog by remember { mutableStateOf(false) }
     val calNow = remember { java.util.Calendar.getInstance() }
     var selectedMonth by remember { mutableIntStateOf(calNow.get(java.util.Calendar.MONTH)) } // 0..11
     var selectedYear by remember { mutableIntStateOf(calNow.get(java.util.Calendar.YEAR)) }
@@ -81,8 +69,8 @@ fun PerfilColaboradorView(
                 HorizontalDivider(color = DividerColor, thickness = 2.dp)
             }
         },
-
-        bottomBar = bottomBar) { padding ->
+        bottomBar = bottomBar
+    ) { padding ->
 
         Column(
             modifier = Modifier
@@ -126,19 +114,10 @@ fun PerfilColaboradorView(
             Divider(color = LightGrayLine)
 
             PerfilItem(
-                icon = R.drawable.ic_key,
-                text = "Alterar Senha",
-                onClick = { showPasswordDialog = true }
-            )
-
-            Divider(color = LightGrayLine)
-
-            PerfilItem(
                 icon = R.drawable.ic_report,
                 text = "Gerar Relatório (PDF)",
                 onClick = { if (!generatingReport) showReportDialog = true }
             )
-
 
             if (generatingReport) {
                 Spacer(Modifier.height(8.dp))
@@ -182,104 +161,8 @@ fun PerfilColaboradorView(
         }
     }
 
-    if (showReportDialog) {
-        RelatorioDialog(
-            initialMonth = selectedMonth,
-            initialYear = selectedYear,
-            initialAllTime = reportAllTime,
-            onDismiss = { showReportDialog = false },
-            onConfirm = { month, year, allTime ->
-                showReportDialog = false
+    // --------- DIALOGS (agora num ficheiro separado) ---------
 
-                selectedMonth = month
-                selectedYear = year
-                reportAllTime = allTime
-
-                val (start, end) = calcularIntervaloRelatorio(month, year, allTime)
-
-                generatingReport = true
-                reportError = null
-
-                relatorioVm.carregarRelatorioCompleto(start, end) { result ->
-                    when (result) {
-                        is ResultState.Loading -> Unit
-
-                        is ResultState.Error -> {
-                            generatingReport = false
-                            reportError = result.message
-                        }
-
-                        is ResultState.Success -> {
-                            val r = result.data
-                            val c = r.contagens
-
-                            val report = PdfReportGenerator.ReportData(
-                                title = "Relatório - Loja Social",
-                                subtitle = if (allTime) "Filtro: Tudo" else "Filtro: ${monthNamePt(month)} $year",
-                                generatedAt = Date(),
-                                blocks = listOf(
-                                    PdfReportGenerator.Block.SectionTitle("Resumo"),
-                                    PdfReportGenerator.Block.Paragraph(
-                                        listOf(
-                                            "Pedidos pendentes: ${c.pedidosPendentes}",
-                                            "Pedidos entregues: ${c.pedidosEntregues}",
-                                            "Pedidos cancelados: ${c.pedidosCancelados}",
-                                            "Entregas pendentes: ${c.entregasPendentes}",
-                                            "Entregas prontas: ${c.entregasProntas}",
-                                            "Entregas entregues: ${c.entregasEntregues}",
-                                            "Entregas canceladas: ${c.entregasCanceladas}",
-                                            "Candidaturas em análise: ${c.candidaturasEmAnalise}",
-                                            "Candidaturas aprovadas: ${c.candidaturasAprovadas}",
-                                            "Candidaturas rejeitadas: ${c.candidaturasRejeitadas}"
-                                        )
-                                    ),
-
-
-                                    PdfReportGenerator.Block.Table(
-                                        title = "Pedidos",
-                                        headers = listOf("Nome", "Estado", "Data"),
-                                        rows = r.pedidosRows
-                                    ),
-
-
-                                    PdfReportGenerator.Block.Table(
-                                        title = "Entregas",
-                                        headers = listOf("Beneficiário", "Estado", "Tipo", "Agendamento"),
-                                        rows = r.entregasRows
-                                    ),
-
-
-                                    PdfReportGenerator.Block.Table(
-                                        title = "Stock atual",
-                                        headers = listOf("Produto", "Disponível", "Total"),
-                                        rows = r.stockRows
-                                    )
-                                )
-                            )
-
-                            val uri = PdfReportGenerator.generateAndSave(context, report)
-                            generatingReport = false
-
-                            if (uri == null) {
-                                reportError = "Não foi possível guardar o PDF."
-                                return@carregarRelatorioCompleto
-                            }
-
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                setDataAndType(uri, "application/pdf")
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            }
-                            context.startActivity(Intent.createChooser(intent, "Abrir relatório"))
-                        }
-
-                        else -> Unit
-                    }
-                }
-            }
-        )
-    }
-
-    // ---------- EDITAR DADOS ----------
     if (showEditDialog) {
         EditarDadosDialog(
             nomeInicial = state.nome,
@@ -296,23 +179,32 @@ fun PerfilColaboradorView(
         )
     }
 
-    // ---------- ALTERAR PASSWORD ----------
-    if (showPasswordDialog) {
-        AlterarSenhaDialog(
-            onCancel = { showPasswordDialog = false },
-            onSave = { passAtual, novaPass, success, error ->
-                viewModel.updatePassword(
-                    currentPassword = passAtual,
-                    newPassword = novaPass,
-                    onSuccess = { success() },
-                    onError = { msg -> error(msg) }
-                )
+    if (showReportDialog) {
+        RelatorioDialogHost(
+            relatorioVm = relatorioVm,
+            initialMonth = selectedMonth,
+            initialYear = selectedYear,
+            initialAllTime = reportAllTime,
+            onDismiss = { showReportDialog = false },
+            onStart = {
+                generatingReport = true
+                reportError = null
             },
-            onAutoClose = { showPasswordDialog = false }
+            onError = { msg ->
+                generatingReport = false
+                reportError = msg
+            },
+            onSuccess = {
+                generatingReport = false
+            },
+            onPersistSelection = { month, year, allTime ->
+                selectedMonth = month
+                selectedYear = year
+                reportAllTime = allTime
+            }
         )
     }
 
-    // ---------- LOGOUT ----------
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -356,177 +248,6 @@ fun PerfilItem(icon: Int, text: String, onClick: () -> Unit) {
             modifier = Modifier.size(18.dp)
         )
     }
-}
-
-/* ---------- DIALOGS  ---------- */
-
-@Composable
-fun EditarDadosDialog(
-    nomeInicial: String,
-    email: String,
-    onCancel: () -> Unit,
-    onSave: (String, () -> Unit, (String) -> Unit) -> Unit,
-    onAutoClose: () -> Unit
-) {
-    var nome by remember { mutableStateOf(nomeInicial) }
-
-    var success by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf("") }
-
-    val scope = rememberCoroutineScope()
-
-    AlertDialog(
-        onDismissRequest = {
-            success = ""
-            error = ""
-            onCancel()
-        },
-        title = { Text("Editar Dados") },
-        text = {
-            Column {
-                if (success.isNotEmpty()) {
-                    Text(success, color = Color(0xFF2E7D32))
-                    Spacer(Modifier.height(10.dp))
-                }
-
-                if (error.isNotEmpty()) {
-                    Text(error, color = Color.Red)
-                    Spacer(Modifier.height(10.dp))
-                }
-
-                OutlinedTextField(
-                    value = nome,
-                    onValueChange = { nome = it },
-                    label = { Text("Nome") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = {},
-                    label = { Text("Email") },
-                    readOnly = true,
-                    enabled = false,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        disabledTextColor = Color.Gray,
-                        disabledLabelColor = Color.Gray,
-                        disabledBorderColor = Color.LightGray
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onSave(
-                        nome,
-                        {
-                            error = ""
-                            success = "Nome atualizado!"
-                            scope.launch {
-                                delay(1500)
-                                onAutoClose()
-                            }
-                        },
-                        { msg ->
-                            success = ""
-                            error = msg
-                        }
-                    )
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Green),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Guardar", color = Color.White)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { onCancel() }) { Text("Cancelar") }
-        }
-    )
-}
-
-@Composable
-fun AlterarSenhaDialog(
-    onCancel: () -> Unit,
-    onSave: (String, String, () -> Unit, (String) -> Unit) -> Unit,
-    onAutoClose: () -> Unit
-) {
-    var passwordAtual by remember { mutableStateOf("") }
-    var novaPassword by remember { mutableStateOf("") }
-
-    var success by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf("") }
-
-    val scope = rememberCoroutineScope()
-
-    AlertDialog(
-        onDismissRequest = { onCancel() },
-        title = { Text("Alterar Senha") },
-        text = {
-            Column {
-                if (success.isNotEmpty()) {
-                    Text(success, color = Color(0xFF2E7D32))
-                    Spacer(Modifier.height(10.dp))
-                }
-
-                if (error.isNotEmpty()) {
-                    Text(error, color = Color.Red)
-                    Spacer(Modifier.height(10.dp))
-                }
-
-                OutlinedTextField(
-                    value = passwordAtual,
-                    onValueChange = { passwordAtual = it },
-                    label = { Text("Password Atual") },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation()
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = novaPassword,
-                    onValueChange = { novaPassword = it },
-                    label = { Text("Nova Password") },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onSave(
-                        passwordAtual,
-                        novaPassword,
-                        {
-                            error = ""
-                            success = "Senha alterada com sucesso!"
-                            scope.launch {
-                                delay(1500)
-                                onAutoClose()
-                            }
-                        },
-                        { msg ->
-                            success = ""
-                            error = msg
-                        }
-                    )
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Green),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Guardar", color = Color.White)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { onCancel() }) { Text("Cancelar") }
-        }
-    )
 }
 
 @Preview(showBackground = true)

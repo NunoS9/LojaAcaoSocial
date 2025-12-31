@@ -13,6 +13,7 @@ object FirestoreCollections {
     const val PRODUTOS = "produtos"
 
     const val CANDIDATURAS = "candidaturas"
+    const val DOCUMENTOS_CANDIDATURA = "documentos"
 
     const val PEDIDOS = "pedidos"
     const val ITENS_ENTREGA = "itens_entrega"

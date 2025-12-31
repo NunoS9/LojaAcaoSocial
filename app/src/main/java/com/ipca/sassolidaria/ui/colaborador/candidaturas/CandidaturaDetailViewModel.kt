@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ipca.sassolidaria.data.model.Candidatura
+import com.ipca.sassolidaria.data.model.DocumentoCandidatura
 import com.ipca.sassolidaria.data.model.enums.TipoNotificacao
 import com.ipca.sassolidaria.data.repository.CandidaturasRepository
 import com.ipca.sassolidaria.data.repository.NotificacoesRepository
@@ -21,10 +22,18 @@ class CandidaturaDetailViewModel(
 
     var isLoading by mutableStateOf(false)
 
+
+    var documentos by mutableStateOf<List<DocumentoCandidatura>>(emptyList())
+        private set
+
     fun carregarCandidatura(id: String) {
         viewModelScope.launch {
             isLoading = true
             candidatura = repo.getCandidaturaById(id)
+
+
+            documentos = repo.getDocumentosDaCandidatura(id)
+
             isLoading = false
         }
     }
@@ -34,10 +43,8 @@ class CandidaturaDetailViewModel(
 
         viewModelScope.launch {
             try {
-                // aprova + cria beneficiário + promove user
                 val idBeneficiarioCriado = repo.aprovarCandidaturaEPromoverUser(itemAtual)
 
-                // notificação para o BENEFICIÁRIO (destinatario = id_beneficiario)
                 try {
                     notifRepo.notificarDestinatario(
                         destinatarioId = idBeneficiarioCriado,
@@ -60,10 +67,8 @@ class CandidaturaDetailViewModel(
 
         viewModelScope.launch {
             try {
-                // recusa candidatura
                 repo.recusarCandidatura(itemAtual.id_candidatura)
 
-                //  notificação para o UTILIZADOR (destinatario = id_utilizador que submeteu)
                 try {
                     notifRepo.notificarDestinatario(
                         destinatarioId = itemAtual.id_utilizador,

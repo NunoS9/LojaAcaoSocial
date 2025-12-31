@@ -10,6 +10,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.ipca.sassolidaria.data.model.Produto
 import com.ipca.sassolidaria.utils.FirestoreCollections
 import com.ipca.sassolidaria.utils.ResultState
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
@@ -20,7 +22,9 @@ data class AlertaProdutoUi(
     val idProduto: String,
     val nome: String,
     val validadeLabel: String,
-    val quantidadeDisponivel: Int
+    val validadeDate: Date,
+    val quantidadeDisponivel: Int,
+    val isExpired: Boolean
 )
 
 class AlertasValidadeViewModel(
@@ -43,7 +47,8 @@ class AlertasValidadeViewModel(
         alertasState = ResultState.Success(
             if (s.isBlank()) rawList
             else rawList.filter {
-                it.nome.contains(s, ignoreCase = true) || it.validadeLabel.contains(s, ignoreCase = true)
+                it.nome.contains(s, ignoreCase = true) ||
+                        it.validadeLabel.contains(s, ignoreCase = true)
             }
         )
     }
@@ -57,8 +62,7 @@ class AlertasValidadeViewModel(
                     .document(uid)
                     .set(mapOf("seen_ids" to ids, "seen_at" to System.currentTimeMillis()))
                     .await()
-            } catch (_: Exception) {
-            }
+            } catch (_: Exception) { }
         }
     }
 
@@ -74,25 +78,68 @@ class AlertasValidadeViewModel(
                 val now = Date()
                 val limite = agoraMais14Dias()
 
-                val snap = db.collection(FirestoreCollections.PRODUTOS)
-                    .whereGreaterThanOrEqualTo("data_validade", now)
-                    .whereLessThanOrEqualTo("data_validade", limite)
-                    .get()
-                    .await()
 
-                val list = snap.documents.mapNotNull { d ->
-                    val p = d.toObject(Produto::class.java) ?: return@mapNotNull null
-                    val validade = p.data_validade ?: return@mapNotNull null
-                    AlertaProdutoUi(
-                        idProduto = d.id,
-                        nome = p.nome,
-                        validadeLabel = dateFormat.format(validade),
-                        quantidadeDisponivel = p.quantidade_disponivel
+                val jobAExpirar = viewModelScope.async {
+                    val snap = db.collection(FirestoreCollections.PRODUTOS)
+                        .whereGreaterThanOrEqualTo("data_validade", now)
+                        .whereLessThanOrEqualTo("data_validade", limite)
+                        .get()
+                        .await()
+
+                    snap.documents.mapNotNull { d ->
+                        val p = d.toObject(Produto::class.java) ?: return@mapNotNull null
+                        val validade = p.data_validade ?: return@mapNotNull null
+
+                        AlertaProdutoUi(
+                            idProduto = d.id,
+                            nome = p.nome,
+                            validadeLabel = dateFormat.format(validade),
+                            validadeDate = validade,
+                            quantidadeDisponivel = p.quantidade_disponivel,
+                            isExpired = false
+                        )
+                    }
+                }
+
+
+                val jobExpirados = viewModelScope.async {
+                    val snap = db.collection(FirestoreCollections.PRODUTOS)
+                        .whereLessThan("data_validade", now)
+                        .get()
+                        .await()
+
+                    snap.documents.mapNotNull { d ->
+                        val p = d.toObject(Produto::class.java) ?: return@mapNotNull null
+                        val validade = p.data_validade ?: return@mapNotNull null
+
+
+                        if (p.quantidade_disponivel <= 0) return@mapNotNull null
+
+                        AlertaProdutoUi(
+                            idProduto = d.id,
+                            nome = p.nome,
+                            validadeLabel = dateFormat.format(validade),
+                            validadeDate = validade,
+                            quantidadeDisponivel = p.quantidade_disponivel,
+                            isExpired = true
+                        )
+                    }
+                }
+
+                val results = awaitAll(jobAExpirar, jobExpirados)
+                val aExpirar = results[0] as List<AlertaProdutoUi>
+                val expirados = results[1] as List<AlertaProdutoUi>
+
+                val merged = (expirados + aExpirar)
+                    .distinctBy { it.idProduto }
+                    .sortedWith(
+                        compareByDescending<AlertaProdutoUi> { it.isExpired } // expirados primeiro
+                            .thenBy { it.validadeDate } // mais antigos primeiro
                     )
-                }.sortedBy { it.validadeLabel }
 
-                rawList = list
-                alertasState = ResultState.Success(list)
+                rawList = merged
+                alertasState = ResultState.Success(merged)
+
             } catch (e: Exception) {
                 alertasState = ResultState.Error(e.message ?: "Erro ao carregar alertas.")
             }
