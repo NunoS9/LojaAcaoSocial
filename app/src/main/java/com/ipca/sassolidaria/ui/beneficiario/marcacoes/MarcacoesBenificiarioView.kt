@@ -29,7 +29,6 @@ private val DividerColor = Color(0xFFB0B0B0)
 
 private val GreenDark = Color(0xFF004B3C)
 
-// chips (soft)
 private val ChipGreenBg = Color(0xFFE8F5E9)
 private val ChipGreenText = Color(0xFF2E7D32)
 
@@ -182,19 +181,11 @@ private fun MarcacaoCard(
     val sdf = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     val dataTexto = agendamento.data_agendada?.let { sdf.format(it) } ?: "—"
 
-    // chip (igual ideia do teu Triple)
     val (estadoTexto, estadoBg, estadoFg) = when (agendamento.estado) {
-        EstadoAgendamento.ACEITE ->
-            Triple("Aceite", ChipGreenBg, ChipGreenText)
-
-        EstadoAgendamento.PENDENTE ->
-            Triple("Pendente", ChipYellow, ChipYellowText)
-
-        EstadoAgendamento.RECUSADO ->
-            Triple("Recusado", ChipRedBg, ChipRedText)
-
-        else ->
-            Triple(agendamento.estado.name, Color.LightGray, Color.DarkGray)
+        EstadoAgendamento.ACEITE -> Triple("Aceite", ChipGreenBg, ChipGreenText)
+        EstadoAgendamento.PENDENTE -> Triple("Pendente", ChipYellow, ChipYellowText)
+        EstadoAgendamento.RECUSADO -> Triple("Recusado", ChipRedBg, ChipRedText)
+        else -> Triple(agendamento.estado.name, Color.LightGray, Color.DarkGray)
     }
 
     val tipoTexto = when (agendamento.tipo) {
@@ -210,13 +201,13 @@ private fun MarcacaoCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Top row: "Marcação #ID" + chip
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Marcação #${agendamento.id_agendamento}",
+                    text = "Marcação",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -238,9 +229,7 @@ private fun MarcacaoCard(
             }
 
             Spacer(Modifier.height(10.dp))
-
             HorizontalDivider(color = Color(0xFFEFEFEF))
-
             Spacer(Modifier.height(10.dp))
 
             Text(
@@ -265,7 +254,6 @@ private fun MarcacaoCard(
                 color = Color(0xFF6F6F6F)
             )
 
-            // Botões só se pendente (mais bonitos)
             if (agendamento.estado == EstadoAgendamento.PENDENTE) {
                 Spacer(Modifier.height(14.dp))
                 HorizontalDivider(color = Color(0xFFEFEFEF))
@@ -283,9 +271,7 @@ private fun MarcacaoCard(
                             containerColor = Color.White,
                             contentColor = GreenDark
                         )
-                    ) {
-                        Text("Marcar")
-                    }
+                    ) { Text("Marcar") }
 
                     Button(
                         onClick = onRecusar,
@@ -295,9 +281,7 @@ private fun MarcacaoCard(
                             containerColor = Color.White,
                             contentColor = ChipRedText
                         )
-                    ) {
-                        Text("Recusar")
-                    }
+                    ) { Text("Recusar") }
                 }
             }
         }

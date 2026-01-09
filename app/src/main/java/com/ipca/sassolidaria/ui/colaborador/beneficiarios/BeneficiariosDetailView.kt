@@ -1,5 +1,6 @@
 package com.ipca.sassolidaria.ui.colaborador.beneficiarios
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -56,8 +57,11 @@ fun BeneficiarioDetailView(
                 BeneficiarioDetailContent(
                     beneficiario = beneficiario!!,
                     onVerPedidos = {
+                        val nomeEnc = Uri.encode(beneficiario!!.nome)
                         navController.navigate(
-                            Routes.BENEFICIARIO_PEDIDOS.replace("{idBeneficiario}", beneficiario!!.id_beneficiario)
+                            Routes.BENEFICIARIO_PEDIDOS
+                                .replace("{idBeneficiario}", beneficiario!!.id_beneficiario)
+                                .replace("{beneficiarioNome}", nomeEnc)
                         )
                     },
                     onVerApoios = {
@@ -66,19 +70,19 @@ fun BeneficiarioDetailView(
                         )
                     },
                     onVerAgendamentos = {
+                        val nomeEnc = Uri.encode(beneficiario!!.nome)
                         navController.navigate(
-                            Routes.BENEFICIARIO_AGENDAMENTOS.replace(
-                                "{idBeneficiario}",
-                                beneficiario!!.id_beneficiario
-                            )
+                            Routes.BENEFICIARIO_AGENDAMENTOS
+                                .replace("{idBeneficiario}", beneficiario!!.id_beneficiario)
+                                .replace("{beneficiarioNome}", nomeEnc)
                         )
                     },
                     onVerEntregas = {
+                        val nomeEnc = Uri.encode(beneficiario!!.nome)
                         navController.navigate(
-                            Routes.BENEFICIARIO_ENTREGAS.replace(
-                                "{idBeneficiario}",
-                                beneficiario!!.id_beneficiario
-                            )
+                            Routes.BENEFICIARIO_ENTREGAS
+                                .replace("{idBeneficiario}", beneficiario!!.id_beneficiario)
+                                .replace("{beneficiarioNome}", nomeEnc)
                         )
                     }
                 )
@@ -137,11 +141,6 @@ private fun BeneficiarioDetailContent(
 
                 Text(beneficiario.nome, style = MaterialTheme.typography.titleMedium)
 
-                Text(
-                    text = "ID: ${beneficiario.id_beneficiario}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
             }
         }
 

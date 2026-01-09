@@ -156,7 +156,7 @@ private fun PedidoCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = pedido.id,
+                    text = "Pedido",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )

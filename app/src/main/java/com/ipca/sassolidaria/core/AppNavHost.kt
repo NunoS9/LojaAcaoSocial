@@ -46,7 +46,6 @@ import com.ipca.sassolidaria.ui.colaborador.beneficiarios.AgendamentoEditarView
 import com.ipca.sassolidaria.ui.colaborador.beneficiarios.BeneficiarioEntregasView
 import com.ipca.sassolidaria.ui.colaborador.beneficiarios.ProcessarEntregaView
 
-
 import com.ipca.sassolidaria.ui.beneficiario.HomeBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.NotificacoesBeneficiarioView
 import com.ipca.sassolidaria.ui.beneficiario.perfil.PerfilBeneficiarioView
@@ -62,7 +61,6 @@ import com.ipca.sassolidaria.ui.utilizador.NotificacoesUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturasUtilizadorView
 import com.ipca.sassolidaria.ui.utilizador.candidaturas.CandidaturaCreateView
 
-//  CHAT
 import com.ipca.sassolidaria.ui.chat.ChatView
 import com.ipca.sassolidaria.ui.chat.ChatListView
 import com.ipca.sassolidaria.ui.chat.components.SuportePerfilItem
@@ -84,7 +82,6 @@ fun AppNavHost() {
         startDestination = Routes.SPLASH
     ) {
 
-        /* ------------------------- SPLASH ------------------------- */
         composable(Routes.SPLASH) {
             SplashView(
                 onNavigateToLogin = {
@@ -95,7 +92,6 @@ fun AppNavHost() {
             )
         }
 
-        /* ------------------------- AUTENTICAÇÃO ------------------------- */
         composable(Routes.LOGIN) { LoginView(navController) }
         composable(Routes.REGISTER) { RegisterView(navController) }
         composable(Routes.RECOVER_PASSWORD) { }
@@ -132,14 +128,8 @@ fun AppNavHost() {
             PerfilColaboradorView(
                 viewModel = viewModel(),
                 bottomBar = { BottomBar(navController) },
-                onLogoutConfirmed = {
-                    navController.navigate(Routes.LOGIN) { popUpTo(0) }
-                },
-                suporteSlot = {
-                    SuportePerfilItem {
-                        navController.navigate(Routes.CHAT_COLABORADOR_LIST)
-                    }
-                }
+                onLogoutConfirmed = { navController.navigate(Routes.LOGIN) { popUpTo(0) } },
+                suporteSlot = { SuportePerfilItem { navController.navigate(Routes.CHAT_COLABORADOR_LIST) } }
             )
         }
 
@@ -191,10 +181,18 @@ fun AppNavHost() {
             BeneficiarioDetailView(navController, entry.arguments?.getString("id") ?: "")
         }
 
-        composable(Routes.BENEFICIARIO_PEDIDOS) { backStack ->
+
+        composable(
+            route = Routes.BENEFICIARIO_PEDIDOS,
+            arguments = listOf(
+                navArgument("idBeneficiario") { type = NavType.StringType },
+                navArgument("beneficiarioNome") { type = NavType.StringType }
+            )
+        ) { backStack ->
             setUser("COLABORADOR")
             val idBenef = backStack.arguments?.getString("idBeneficiario") ?: ""
-            PedidosBeneficiarioView(navController, idBenef)
+            val nome = backStack.arguments?.getString("beneficiarioNome") ?: ""
+            PedidosBeneficiarioView(navController, idBenef, beneficiarioNome = nome)
         }
 
         composable(Routes.BENEFICIARIO_APOIOS) { backStack ->
@@ -211,10 +209,18 @@ fun AppNavHost() {
             AgendamentoMarcarView(navController, idBenef, tipo, ref)
         }
 
-        composable(Routes.BENEFICIARIO_AGENDAMENTOS) { backStackEntry ->
+
+        composable(
+            route = Routes.BENEFICIARIO_AGENDAMENTOS,
+            arguments = listOf(
+                navArgument("idBeneficiario") { type = NavType.StringType },
+                navArgument("beneficiarioNome") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
             setUser("COLABORADOR")
             val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario") ?: ""
-            BeneficiarioAgendamentosView(navController, idBeneficiario)
+            val nome = backStackEntry.arguments?.getString("beneficiarioNome") ?: ""
+            BeneficiarioAgendamentosView(navController, idBeneficiario, beneficiarioNome = nome)
         }
 
         composable("agendamento_editar/{idBeneficiario}/{idAgendamento}") { backStackEntry ->
@@ -226,11 +232,15 @@ fun AppNavHost() {
 
         composable(
             route = Routes.BENEFICIARIO_ENTREGAS,
-            arguments = listOf(navArgument("idBeneficiario") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("idBeneficiario") { type = NavType.StringType },
+                navArgument("beneficiarioNome") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             setUser("COLABORADOR")
             val idBeneficiario = backStackEntry.arguments?.getString("idBeneficiario").orEmpty()
-            BeneficiarioEntregasView(navController, idBeneficiario)
+            val nome = backStackEntry.arguments?.getString("beneficiarioNome").orEmpty()
+            BeneficiarioEntregasView(navController, idBeneficiario, beneficiarioNome = nome)
         }
 
         composable(
@@ -261,14 +271,8 @@ fun AppNavHost() {
             setUser("BENEFICIARIO")
             PerfilBeneficiarioView(
                 bottomBar = { BottomBar(navController) },
-                onLogoutConfirmed = {
-                    navController.navigate(Routes.LOGIN) { popUpTo(0) }
-                },
-                suporteSlot = {
-                    SuportePerfilItem {
-                        navController.navigate(Routes.CHAT_BENEFICIARIO)
-                    }
-                }
+                onLogoutConfirmed = { navController.navigate(Routes.LOGIN) { popUpTo(0) } },
+                suporteSlot = { SuportePerfilItem { navController.navigate(Routes.CHAT_BENEFICIARIO) } }
             )
         }
 
@@ -338,7 +342,7 @@ fun AppNavHost() {
             PerfilUtilizadorView(navController = navController)
         }
 
-            composable(Routes.CANDIDATURA_UTILIZADOR) {
+        composable(Routes.CANDIDATURA_UTILIZADOR) {
             setUser("UTILIZADOR")
             CandidaturasUtilizadorView(navController)
         }
@@ -354,7 +358,6 @@ fun AppNavHost() {
         }
     }
 }
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)

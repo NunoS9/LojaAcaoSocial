@@ -1,34 +1,13 @@
 package com.ipca.sassolidaria.ui.colaborador.beneficiarios
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -101,10 +80,7 @@ fun BeneficiarioEntregasView(
                         if (proximas.isEmpty()) {
                             item { Text("Sem entregas pendentes.", color = Color.Gray) }
                         } else {
-                            items(
-                                items = proximas,
-                                key = { ui -> ui.entrega.id_entrega }
-                            ) { ui ->
+                            items(items = proximas, key = { ui -> ui.entrega.id_entrega }) { ui ->
                                 EntregaCard(
                                     entregaUi = ui,
                                     beneficiarioNome = beneficiarioNome,
@@ -131,10 +107,7 @@ fun BeneficiarioEntregasView(
                         if (historico.isEmpty()) {
                             item { Text("Sem entregas entregues.", color = Color.Gray) }
                         } else {
-                            items(
-                                items = historico,
-                                key = { ui -> ui.entrega.id_entrega }
-                            ) { ui ->
+                            items(items = historico, key = { ui -> ui.entrega.id_entrega }) { ui ->
                                 EntregaCard(
                                     entregaUi = ui,
                                     beneficiarioNome = beneficiarioNome,
@@ -163,7 +136,7 @@ private fun EntregaCard(
 
     val (chipTxt, chipBg, chipFg) = when (entrega.estado) {
         EstadoEntrega.PENDENTE -> Triple("Pendente", Color(0xFFFFF3CD), Color(0xFF8A6D3B))
-        EstadoEntrega.PRONTA -> Triple("Pronta", Color(0xFFE3F2FD), Color(0xFF1565C0)) // ✅ azul
+        EstadoEntrega.PRONTA -> Triple("Pronta", Color(0xFFE3F2FD), Color(0xFF1565C0))
         EstadoEntrega.ENTREGUE -> Triple("Entregue", Color(0xFFD4EDDA), Color(0xFF2E7D32))
         EstadoEntrega.CANCELADA -> Triple("Cancelada", Color(0xFFF8D7DA), Color(0xFFD32F2F))
     }
@@ -182,8 +155,15 @@ private fun EntregaCard(
         Column(Modifier.padding(16.dp)) {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("ID da Entrega: #${entrega.id_entrega}", style = MaterialTheme.typography.bodySmall)
+
+                Text(
+                    beneficiarioNome.ifBlank { "Beneficiário" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+
                 Spacer(Modifier.weight(1f))
+
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
@@ -194,8 +174,6 @@ private fun EntregaCard(
 
             Spacer(Modifier.height(10.dp))
 
-            Text(beneficiarioNome, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(4.dp))
             Text("Tipo: ${entrega.tipo.name}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
             Text("Data do Agendamento: $dataTxt", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
 
@@ -220,9 +198,7 @@ private fun EntregaCard(
                         onClick = onProcessarOuEditar,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B5E45)),
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
+                        modifier = Modifier.weight(1f).height(44.dp)
                     ) { Text(label, color = Color.White) }
 
                     Spacer(Modifier.weight(0.08f))
@@ -232,9 +208,7 @@ private fun EntregaCard(
                         enabled = entrega.estado == EstadoEntrega.PRONTA,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B5E45)),
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
+                        modifier = Modifier.weight(1f).height(44.dp)
                     ) { Text("Confirmar", color = Color.White) }
                 }
             }

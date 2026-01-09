@@ -158,7 +158,7 @@ private fun EntregaCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Entrega #${entrega.id}",
+                    text = "Entrega",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
